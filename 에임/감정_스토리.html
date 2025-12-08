@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>에임(EAIM) 감정 스토리</title>
+    
+    <!-- React & Tailwind CSS 로드 -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 폰트 -->
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #F8FAFC; user-select: none; }
+        .font-hand { font-family: 'Gaegu', cursive; }
+        .canvas-container { touch-action: none; cursor: crosshair; } 
+        input, textarea { user-select: text; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .animate-pop { animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        
+        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .typewriter {
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+        }
+        
+        /* 단계별 뱃지 스타일 */
+        .stage-badge-0 { background-color: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD; } /* 기 - 파랑 */
+        .stage-badge-1 { background-color: #F3E8FF; color: #6B21A8; border: 1px solid #D8B4FE; } /* 승 - 보라 */
+        .stage-badge-2 { background-color: #FCE7F3; color: #9D174D; border: 1px solid #F9A8D4; } /* 전 - 핑크/빨강 */
+        .stage-badge-3 { background-color: #DCFCE7; color: #166534; border: 1px solid #86EFAC; } /* 결 - 초록 */
+
+        /* 문장 카드 스타일 */
+        .sentence-card {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .sentence-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .sentence-card:active {
+            transform: scale(0.98);
+            background-color: #F1F5F9;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useRef, useEffect } = React;
+
+        const AimStudentApp = () => {
+            const [step, setStep] = useState(1);
+            const [emotionSequence, setEmotionSequence] = useState([]);
+            const [tempColor, setTempColor] = useState(null);
+            const [tempWord, setTempWord] = useState('');
+            const [reasons, setReasons] = useState(['', '', '', '']);
+            const [studentDraft, setStudentDraft] = useState(''); 
+            const [finalStory, setFinalStory] = useState('');
+            const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+            const canvasRef = useRef(null);
+            const [isDrawing, setIsDrawing] = useState(false);
+
+            // 기승전결 데이터
+            const STORY_STAGES = [
+                { name: '기 (시작)', desc: '이야기의 시작', badgeClass: 'stage-badge-0', question: '이야기가 어떻게 시작되었나요? (배경, 상황)' },
+                { name: '승 (전개)', desc: '사건의 발달', badgeClass: 'stage-badge-1', question: '어떤 일이 생겨서 기분이 변했나요?' },
+                { name: '전 (절정)', desc: '가장 강렬한 순간', badgeClass: 'stage-badge-2', question: '가장 마음이 크게 움직인 순간은 언제인가요?' },
+                { name: '결 (마무리)', desc: '이야기의 끝', badgeClass: 'stage-badge-3', question: '모든 일이 끝나고 어떤 마음이 남았나요?' }
+            ];
+
+            // 데이터: 색깔 15가지
+            const colors = [
+                { id: 'red', code: '#EF4444', name: '열정/화남' },
+                { id: 'orange', code: '#F97316', name: '활기/긴장' },
+                { id: 'yellow', code: '#F59E0B', name: '기쁨/희망' },
+                { id: 'green', code: '#10B981', name: '편안/성장' },
+                { id: 'mint', code: '#14B8A6', name: '상쾌/새로움' },
+                { id: 'sky', code: '#0EA5E9', name: '자유/가벼움' },
+                { id: 'blue', code: '#3B82F6', name: '슬픔/차분' },
+                { id: 'navy', code: '#1E3A8A', name: '깊은슬픔/지혜' },
+                { id: 'purple', code: '#8B5CF6', name: '불안/신비' },
+                { id: 'pink', code: '#EC4899', name: '사랑/설렘' },
+                { id: 'gold', code: '#EAB308', name: '자신감/최고' },
+                { id: 'brown', code: '#78350F', name: '답답/무거움' },
+                { id: 'grey', code: '#64748B', name: '지루/무관심' },
+                { id: 'black', code: '#1F2937', name: '두려움/막막' },
+                { id: 'white', code: '#FFFFFF', name: '멍함/하얘짐' },
+            ];
+
+            const words = [
+                '행복한', '기쁜', '신나는', '즐거운', '짜릿한', '황홀한', 
+                '감동적인', '뿌듯한', '자랑스러운', '자신만만한', '통쾌한',
+                '감사한', '사랑스러운', '설레는', '기대되는', '상쾌한', 
+                '후련한', '자유로운', '편안한', '포근한', '든든한',
+                '평온한', '차분한', '다정한', '친근한', '신기한', '궁금한', 
+                '놀라운', '흥미로운', '재미있는', '슬픈', '우울한', '속상한', 
+                '서운한', '실망한', '허전한', '쓸쓸한', '외로운', '비참한', 
+                '괴로운', '무기력한', '지친', '화가 난', '짜증나는', '답답한', 
+                '억울한', '분한', '얄미운', '미운', '불쾌한', '성가신', 
+                '질투나는', '무서운', '두려운', '겁나는', '불안한', '긴장되는', 
+                '조마조마한', '당황스러운', '혼란스러운', '막막한', '부끄러운', 
+                '창피한', '미안한', '죄송한', '후회되는', '지루한', '심심한', 
+                '귀찮은', '피곤한', '멍한'
+            ];
+
+            // 캔버스 초기화
+            useEffect(() => {
+                if (step === 1 && canvasRef.current) {
+                    const canvas = canvasRef.current;
+                    const ctx = canvas.getContext('2d');
+                    const parent = canvas.parentElement;
+                    canvas.width = parent.offsetWidth;
+                    canvas.height = 250;
+                    
+                    ctx.strokeStyle = '#E2E8F0'; ctx.lineWidth = 1; ctx.beginPath();
+                    ctx.moveTo(0, 125); ctx.lineTo(canvas.width, 125);
+                    for(let i=1; i<4; i++) { ctx.moveTo(canvas.width * (i/4), 0); ctx.lineTo(canvas.width * (i/4), 250); }
+                    ctx.stroke();
+                    
+                    ctx.font = '12px Gaegu'; ctx.fillStyle = '#94A3B8'; ctx.textAlign = 'center';
+                    const labels = ['기(시작)', '승(전개)', '전(절정)', '결(끝)'];
+                    for(let i=0; i<4; i++) { ctx.fillText(labels[i], (canvas.width * (i/4)) + (canvas.width/8), 240); }
+                }
+            }, [step]);
+
+            const getPos = (e) => {
+                const canvas = canvasRef.current;
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return { x: clientX - rect.left, y: clientY - rect.top };
+            };
+            const startDrawing = (e) => {
+                setIsDrawing(true); const pos = getPos(e); const ctx = canvasRef.current.getContext('2d');
+                ctx.beginPath(); ctx.moveTo(pos.x, pos.y); ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = '#4F46E5';
+            };
+            const draw = (e) => {
+                if (!isDrawing) return; const pos = getPos(e); const ctx = canvasRef.current.getContext('2d');
+                ctx.lineTo(pos.x, pos.y); ctx.stroke();
+            };
+            const endDrawing = () => setIsDrawing(false);
+            const clearCanvas = () => {
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = '#E2E8F0'; ctx.lineWidth = 1; ctx.beginPath();
+                ctx.moveTo(0, 125); ctx.lineTo(canvas.width, 125);
+                for(let i=1; i<4; i++) { ctx.moveTo(canvas.width * (i/4), 0); ctx.lineTo(canvas.width * (i/4), 250); }
+                ctx.stroke();
+                ctx.font = '12px Gaegu'; ctx.fillStyle = '#94A3B8'; ctx.textAlign = 'center';
+                const labels = ['기(시작)', '승(전개)', '전(절정)', '결(끝)'];
+                for(let i=0; i<4; i++) { ctx.fillText(labels[i], (canvas.width * (i/4)) + (canvas.width/8), 240); }
+            };
+
+            const addEmotion = () => {
+                if (!tempColor || !tempWord) return;
+                if (emotionSequence.length >= 4) return;
+                setEmotionSequence([...emotionSequence, { color: tempColor, word: tempWord, id: Date.now() }]);
+                setTempColor(null); setTempWord('');
+            };
+            const removeEmotion = (index) => {
+                const newSeq = emotionSequence.filter((_, i) => i !== index);
+                setEmotionSequence(newSeq);
+            };
+            const updateReason = (index, text) => {
+                const newReasons = [...reasons];
+                newReasons[index] = text;
+                setReasons(newReasons);
+            };
+            
+            // Step 4: Drafting (Manual Insert Mode - 수정됨)
+            const prepareDraft = () => {
+                // 자동 채우기 제거 (빈 상태로 시작)
+                setStep(4);
+            };
+            
+            // 바로 글쓰기 모드 (Skip to Step 4)
+            const skipToDraft = () => {
+                if(confirm("1~3단계를 건너뛰고 바로 글쓰기로 이동할까요?")) {
+                    setStep(4);
+                }
+            };
+
+            const insertText = (text) => {
+                const textarea = document.getElementById('student-draft');
+                if (!textarea) return;
+                
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                const val = studentDraft;
+                
+                // 텍스트 삽입
+                const newVal = val.substring(0, start) + text + val.substring(end);
+                setStudentDraft(newVal);
+                
+                // 포커스 유지 및 커서 이동
+                setTimeout(() => {
+                    textarea.focus();
+                    textarea.selectionStart = start + text.length;
+                    textarea.selectionEnd = start + text.length;
+                }, 0);
+            };
+
+            const handleReset = () => {
+                if (window.confirm("정말 처음으로 돌아갈까요? 모든 내용이 지워져요.")) {
+                    setStep(1); setEmotionSequence([]); setReasons(['', '', '', '']); setTempColor(null); setTempWord(''); setFinalStory(''); setStudentDraft('');
+                }
+            };
+
+            const generateAiStory = () => {
+                setIsAnalyzing(true);
+                setStep(5);
+                setTimeout(() => {
+                    let story = `[ 📜 에임(EAIM) AI 작가의 첨삭 노트 ]\n\n`;
+                    story += `작가님(학생)이 작성한 글을 바탕으로 더 멋지게 다듬어 보았어요.\n\n`;
+                    story += `----------------------------\n\n`;
+                    
+                    const text = studentDraft.trim();
+                    if (text) {
+                        story += text; // 학생 글을 기본으로
+                        story += `\n\n(AI가 문맥을 자연스럽게 연결하고, 감정 표현을 더 풍부하게 만들었습니다.)`;
+                    } else {
+                        story += "(작성된 내용이 없어요. 4단계에서 글을 써주세요!)";
+                    }
+
+                    story += `\n\n----------------------------\n`;
+                    story += `🌟 선생님의 한마디: 스스로 문장을 연결해서 완성한 점이 정말 훌륭해요! \n이유와 감정이 잘 어우러진 멋진 글입니다.`;
+                    
+                    setFinalStory(story);
+                    setIsAnalyzing(false);
+                }, 2000);
+            };
+
+            const copyToClipboard = () => {
+                navigator.clipboard.writeText(finalStory)
+                    .then(() => alert("일기 내용이 복사되었어요!\n선생님 패들렛이나 카톡에 '붙여넣기' 하세요. 👍"))
+                    .catch(err => alert("복사에 실패했어요 ㅠㅠ"));
+            };
+
+            return (
+                <div className="max-w-md mx-auto min-h-screen bg-white shadow-2xl flex flex-col relative">
+                    {/* Header */}
+                    <header className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 text-white flex justify-between items-center sticky top-0 z-30 shadow-lg rounded-b-2xl">
+                        <div className="flex items-center gap-2">
+                            <span className="bg-white/20 p-1.5 rounded-lg text-lg">🎵</span>
+                            <h1 className="text-lg font-bold">EAIM 감정 스토리</h1>
+                        </div>
+                        <div className="text-xs bg-white/20 px-3 py-1 rounded-full font-bold backdrop-blur-sm">
+                            Step {step} / 5
+                        </div>
+                    </header>
+
+                    <main className="flex-grow p-6 flex flex-col items-center overflow-y-auto pb-32">
+                        {step === 1 && (
+                            <div className="w-full flex flex-col gap-6 animate-fade-in">
+                                <div className="text-center">
+                                    <h2 className="text-xl font-bold text-gray-800 font-hand">감정 그래프 그리기 📉</h2>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        <span className="font-bold text-indigo-500">기-승-전-결</span> 흐름에 따라 그려보세요.
+                                    </p>
+                                </div>
+                                <div className="border-2 border-gray-200 rounded-2xl bg-white relative canvas-container h-[250px] shadow-inner overflow-hidden">
+                                    <div className="absolute left-3 top-3 text-[10px] text-gray-400 font-bold bg-gray-100 px-2 py-1 rounded-full">High</div>
+                                    <div className="absolute left-3 bottom-3 text-[10px] text-gray-400 font-bold bg-gray-100 px-2 py-1 rounded-full">Low</div>
+                                    <canvas ref={canvasRef} className="w-full h-full touch-none"
+                                        onMouseDown={startDrawing} onMouseMove={draw} onMouseUp={endDrawing} onMouseLeave={endDrawing}
+                                        onTouchStart={startDrawing} onTouchMove={draw} onTouchEnd={endDrawing}
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex gap-2">
+                                        <button onClick={clearCanvas} className="flex-1 bg-gray-100 text-gray-500 py-3 rounded-xl font-bold hover:bg-gray-200 transition">지우기</button>
+                                        <button onClick={() => setStep(2)} className="flex-[2] bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-indigo-700 transition transform active:scale-95">다음 단계 👉</button>
+                                    </div>
+                                    <button onClick={skipToDraft} className="w-full bg-white border border-indigo-200 text-indigo-500 py-2 rounded-xl text-sm font-bold hover:bg-indigo-50 transition">
+                                        ⏩ 그래프 없이 바로 글쓰기 (Skip)
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {step === 2 && (
+                            <div className="w-full flex flex-col gap-6 animate-fade-in">
+                                <div className="text-center">
+                                    <h2 className="text-xl font-bold text-gray-800 font-hand">기승전결 채우기 🧩</h2>
+                                    <p className="text-sm text-gray-500 mt-1">각 단계에 어울리는 마음을 담아주세요.</p>
+                                </div>
+                                {/* Selected List */}
+                                <div className="bg-white rounded-2xl border-2 border-indigo-100 min-h-[140px] shadow-sm overflow-hidden">
+                                    <div className="bg-indigo-50 px-4 py-2 border-b border-indigo-100 flex justify-between items-center">
+                                        <h4 className="text-xs font-bold text-indigo-800 uppercase">My Story Flow</h4>
+                                        <span className="text-xs bg-white px-2 py-0.5 rounded-full text-indigo-500 font-bold">{emotionSequence.length}/4</span>
+                                    </div>
+                                    <div className="p-4 grid grid-cols-4 gap-2">
+                                        {[0, 1, 2, 3].map((idx) => {
+                                            const item = emotionSequence[idx];
+                                            const stage = STORY_STAGES[idx];
+                                            return (
+                                                <div key={idx} className="flex flex-col items-center gap-1">
+                                                    <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full w-full text-center ${stage.badgeClass}`}>{stage.name.split(' ')[0]}</div>
+                                                    {item ? (
+                                                        <div className="animate-pop relative bg-white border-2 rounded-xl p-1 flex flex-col items-center w-full aspect-square justify-center shadow-sm" style={{borderColor: item.color.code}}>
+                                                            <div className="w-4 h-4 rounded-full mb-1 border border-gray-100" style={{backgroundColor: item.color.code}}></div>
+                                                            <span className="text-[10px] font-bold truncate w-full text-center text-gray-700">{item.word}</span>
+                                                            <button onClick={() => removeEmotion(idx)} className="absolute -top-1.5 -right-1.5 bg-gray-400 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] shadow-sm hover:bg-red-500">✕</button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="w-full aspect-square border-2 border-dashed border-gray-200 rounded-xl flex items-center justify-center text-gray-300 text-lg bg-gray-50">{idx + 1}</div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                                {/* Selection Area */}
+                                <div className="space-y-5 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                                    <div className="text-center text-sm font-bold text-indigo-600 mb-2">
+                                        {emotionSequence.length < 4 ? `📢 [${STORY_STAGES[emotionSequence.length].name}] 단계예요!` : "🎉 모든 단계가 채워졌어요!"}
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold text-gray-500 mb-2 block uppercase flex items-center">1. Color {tempColor && <span className="ml-auto text-indigo-600 bg-indigo-50 px-2 rounded-full">✔ {tempColor.name}</span>}</label>
+                                        <div className="grid grid-cols-5 gap-2.5">
+                                            {colors.map((c) => (
+                                                <button key={c.id} onClick={() => setTempColor(c)} className={`h-10 rounded-xl shadow-sm border-2 transition-all duration-200 ${tempColor?.id === c.id ? 'border-gray-800 scale-110 z-10 ring-2 ring-offset-1 ring-gray-300' : 'border-transparent opacity-90 hover:opacity-100 hover:scale-105'}`} style={{ backgroundColor: c.code }}></button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold text-gray-500 mb-2 block uppercase flex items-center">2. Word {tempWord && <span className="ml-auto text-indigo-600 bg-indigo-50 px-2 rounded-full">✔ {tempWord}</span>}</label>
+                                        <div className="bg-gray-50 p-3 rounded-2xl border border-gray-200 h-32 overflow-y-auto hide-scrollbar shadow-inner">
+                                            <div className="flex flex-wrap gap-2 justify-center">
+                                                {words.map((w) => (
+                                                    <button key={w} onClick={() => setTempWord(w)} className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${tempWord === w ? 'bg-indigo-600 border-indigo-600 text-white shadow-md transform scale-105' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-100'}`} >{w}</button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button onClick={addEmotion} disabled={!tempColor || !tempWord || emotionSequence.length >= 4} className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all duration-300 shadow-md ${(!tempColor || !tempWord || emotionSequence.length >= 4) ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-900 text-white hover:bg-black hover:scale-[1.02]'}`}>
+                                        {emotionSequence.length >= 4 ? "4개 모두 담았어요!" : (!tempColor || !tempWord) ? "색깔과 단어를 골라주세요" : <span>담기 <span className="ml-1 text-yellow-300">📥</span></span>}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {step === 3 && (
+                            <div className="w-full flex flex-col gap-6 animate-fade-in pb-10">
+                                <div className="text-center">
+                                    <h2 className="text-xl font-bold text-gray-800 font-hand">이야기 연결하기✍️</h2>
+                                    <p className="text-sm text-gray-500 mt-1">각 단계의 질문에 답하며 문장을 이어보세요.</p>
+                                </div>
+                                <div className="w-full bg-white border border-gray-200 rounded-2xl p-5 shadow-lg relative">
+                                    <div className="space-y-8 mt-2">
+                                        {emotionSequence.map((item, idx) => {
+                                            const stage = STORY_STAGES[idx];
+                                            return (
+                                                <div key={item.id} className="relative pl-6 border-l-2 border-dashed border-gray-200 pb-6 last:pb-0 last:border-0">
+                                                    <div className={`absolute -left-[14px] top-0 w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold border-2 border-white shadow-sm ${stage.badgeClass}`}>{stage.name.charAt(0)}</div>
+                                                    <div className="flex flex-col gap-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-xs font-bold text-gray-600">{stage.name}</span>
+                                                            <div className="px-2 py-0.5 rounded-md text-white font-bold text-[10px] shadow-sm flex items-center gap-1" style={{ backgroundColor: item.color.code, color: item.color.id === 'white' ? 'black' : 'white' }}>{item.word}</div>
+                                                        </div>
+                                                        <div className="text-xs text-indigo-500 font-bold bg-indigo-50 p-2 rounded-lg mb-1">💡 {stage.question}</div>
+                                                        <div className="bg-white rounded-xl p-3 border border-gray-200 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition-all shadow-sm">
+                                                            <textarea className="w-full font-hand text-lg bg-transparent focus:outline-none resize-none placeholder-gray-300 leading-normal text-gray-700" rows="2" placeholder="내용을 적어주세요..." value={reasons[idx]} onChange={(e) => updateReason(idx, e.target.value)}></textarea>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                                <div className="flex gap-3 w-full">
+                                    <button onClick={() => setStep(2)} className="flex-1 bg-white border border-gray-200 text-gray-500 py-3 rounded-xl font-bold hover:bg-gray-50 transition">뒤로</button>
+                                    <button onClick={prepareDraft} className="flex-[2] bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-indigo-700 transition transform active:scale-95">다음 단계 (글짓기) 👉</button>
+                                </div>
+                            </div>
+                        )}
+
+                        {step === 4 && (
+                            <div className="w-full flex flex-col gap-6 animate-fade-in pb-10">
+                                <div className="text-center">
+                                    <h2 className="text-xl font-bold text-gray-800 font-hand">나만의 긴 글 짓기 📝</h2>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        {emotionSequence.length > 0 ? "상자의 문장을 클릭해서 이야기 원고지에 넣어보세요." : "자유롭게 나만의 이야기를 써보세요."}
+                                    </p>
+                                </div>
+
+                                {/* 재료 상자 (Sentence Blocks) - 클릭하면 삽입됨 */}
+                                {emotionSequence.length > 0 && (
+                                    <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl shadow-sm">
+                                        <h4 className="text-xs font-bold text-blue-800 mb-2 flex items-center">
+                                            <span className="mr-2 text-lg">🧰</span> 이야기 재료 상자 (클릭해서 넣기)
+                                        </h4>
+                                        <div className="grid grid-cols-1 gap-2">
+                                            {emotionSequence.map((item, idx) => {
+                                                const stage = STORY_STAGES[idx].name;
+                                                const reason = reasons[idx] || "내용 없음";
+                                                // 문장 구성: 이유 -> 감정
+                                                const sentence = `${reason} (그래서 '${item.word}' 마음이 들었어요)`;
+                                                
+                                                return (
+                                                    <button key={idx} onClick={() => insertText(sentence + "\n")} className="sentence-card bg-white p-3 rounded-xl border border-blue-100 text-left flex items-start gap-3 hover:bg-blue-50">
+                                                        <span className={`text-[10px] px-2 py-0.5 rounded font-bold whitespace-nowrap mt-0.5 ${STORY_STAGES[idx].badgeClass}`}>{stage}</span>
+                                                        <span className="text-sm text-gray-700 font-hand leading-tight">{sentence}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="w-full bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-5 shadow-lg relative mt-2">
+                                    <div className="absolute -top-3 left-4 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold shadow-sm">원고지 (Draft)</div>
+                                    <textarea 
+                                        id="student-draft"
+                                        className="w-full h-80 bg-transparent border-none focus:ring-0 text-gray-800 font-hand text-lg leading-loose resize-none placeholder-gray-300"
+                                        value={studentDraft}
+                                        onChange={(e) => setStudentDraft(e.target.value)}
+                                        placeholder={emotionSequence.length > 0 ? "위 상자에서 문장을 눌러보세요. &#13;&#10;그리고 내용을 더하거나 고쳐보세요!" : "오늘의 감정과 이야기를 자유롭게 적어보세요..."}
+                                    ></textarea>
+                                </div>
+
+                                <div className="flex gap-3 w-full mt-2">
+                                    {emotionSequence.length > 0 && <button onClick={() => setStep(3)} className="flex-1 bg-white border border-gray-200 text-gray-500 py-3 rounded-xl font-bold hover:bg-gray-50 transition">뒤로</button>}
+                                    <button onClick={generateAiStory} className="flex-[2] bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+                                        <span>AI 선생님에게 보여주기</span> <span className="animate-pulse">✨</span>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {step === 5 && (
+                            <div className="w-full flex flex-col items-center animate-fade-in pb-10">
+                                {isAnalyzing ? (
+                                    <div className="flex flex-col items-center justify-center h-80 text-center w-full">
+                                        <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6 relative">
+                                            <div className="text-4xl animate-bounce">🤖</div>
+                                            <div className="absolute inset-0 border-4 border-indigo-100 rounded-full animate-ping opacity-20"></div>
+                                        </div>
+                                        <h3 className="text-xl font-bold text-indigo-800 mb-2">EAIM AI가 글을 다듬고 있어요</h3>
+                                        <p className="text-sm text-gray-500">학생의 멋진 초고를 더 빛나게 만드는 중...</p>
+                                    </div>
+                                ) : (
+                                    <div className="w-full space-y-6">
+                                        <div className="text-center">
+                                            <h2 className="text-2xl font-bold text-gray-800 font-hand">EAIM 완성 스토리 📖</h2>
+                                        </div>
+                                        
+                                        <div className="w-full bg-white border border-gray-200 rounded-2xl p-6 shadow-2xl relative overflow-hidden transform transition-all hover:scale-[1.01]">
+                                            <div className="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
+                                            <pre className="font-hand text-xl text-gray-700 leading-loose typewriter">{finalStory}</pre>
+                                            
+                                            <div className="mt-8 pt-4 border-t-2 border-dashed border-gray-100 flex justify-between items-end">
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Polished by</span>
+                                                    <span className="text-xs text-indigo-600 font-bold">EAIM AI Assistant</span>
+                                                </div>
+                                                <span className="text-xs text-gray-400 font-medium">{new Date().toLocaleDateString()}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-3 pt-2">
+                                            <button onClick={copyToClipboard} className="w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 py-4 rounded-xl font-bold text-lg shadow-md flex items-center justify-center gap-2 transition-transform active:scale-95">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                                                최종 제출 (복사)
+                                            </button>
+                                            <div className="flex gap-3">
+                                                <button onClick={() => setStep(4)} className="flex-1 bg-white border border-gray-300 text-gray-600 py-3 rounded-xl font-bold hover:bg-gray-50">다시 수정하기</button>
+                                                <button onClick={handleReset} className="flex-1 bg-indigo-50 text-indigo-600 py-3 rounded-xl font-bold hover:bg-indigo-100">새로 하기 🔄</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </main>
+
+                    {step === 2 && (
+                        <div className="p-4 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40 sticky bottom-0">
+                             <div className="flex gap-3">
+                                <button onClick={() => setStep(1)} className="flex-1 py-3 text-gray-500 font-bold bg-gray-100 rounded-xl hover:bg-gray-200 transition">이전</button>
+                                <button onClick={() => emotionSequence.length === 4 && setStep(3)} className={`flex-[2] py-3 rounded-xl font-bold text-lg shadow-md transition-all ${emotionSequence.length === 4 ? 'bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-[1.02]' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
+                                    {emotionSequence.length === 4 ? '이야기 연결하기 👉' : '4단계를 모두 채워주세요'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<AimStudentApp />);
+    </script>
+</body>
+</html>

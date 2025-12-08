@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EAIM 웹툰 스튜디오</title>
+    <style>
+        /* 웹툰 스튜디오 전용 스타일 (상큼한 민트/옐로우 테마) */
+        body {
+            font-family: 'Pretendard', 'Malgun Gothic', sans-serif;
+            background-color: #fff9c4; /* 연한 노랑 배경 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            border-top: 10px solid #ffeb3b; /* 포인트 컬러 */
+        }
+
+        h2 { color: #f57f17; margin-bottom: 5px; }
+        p.description { color: #777; margin-bottom: 30px; font-size: 14px; }
+
+        .selection-section { margin-bottom: 25px; text-align: left; }
+        .section-title { font-weight: bold; color: #444; margin-bottom: 10px; display: block; }
+        
+        .button-group { display: flex; flex-wrap: wrap; gap: 8px; }
+        .option-btn {
+            padding: 8px 14px;
+            border: 2px solid #eee;
+            background: #fff;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #555;
+            transition: all 0.2s;
+        }
+        .option-btn:hover { background: #fffde7; border-color: #fbc02d; }
+        
+        /* 선택된 버튼 스타일 */
+        .option-btn.selected {
+            border-color: #fbc02d;
+            background-color: #fff9c4;
+            color: #f57f17;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(to right, #fbc02d, #f57f17);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: transform 0.2s;
+        }
+        .generate-btn:hover { transform: scale(1.02); }
+
+        .result-area {
+            margin-top: 30px;
+            padding: 20px;
+            background: #fafafa;
+            border-radius: 15px;
+            border: 2px dashed #ddd;
+            display: none;
+        }
+        .result-area.show { display: block; animation: slideDown 0.5s; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        textarea {
+            width: 95%;
+            height: 90px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            resize: none;
+            font-family: monospace;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        /* 링크 버튼 스타일 */
+        .action-buttons { display: flex; gap: 8px; justify-content: center; margin-top: 15px; flex-wrap: wrap;}
+        .btn-copy { background: #4CAF50; color: white; border:none; padding:10px 15px; border-radius:10px; cursor:pointer;}
+        .btn-link { 
+            text-decoration: none; color: white; padding: 10px 15px; border-radius: 10px; font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>💭 EAIM 웹툰 작가실</h2>
+        <p class="description">상상한 이야기를 4컷 만화나 웹툰 장면으로 만들어보세요!</p>
+
+        <div class="selection-section">
+            <span class="section-title">① 웹툰 장르 (Genre)</span>
+            <div class="button-group" id="genre-group">
+                <button class="option-btn selected" data-value="School Life slice of life">🏫 학교 일상</button>
+                <button class="option-btn" data-value="Fantasy Adventure with magic">⚔️ 판타지 모험</button>
+                <button class="option-btn" data-value="Touching Drama">💧 감동 드라마</button>
+                <button class="option-btn" data-value="Cute Comedy">🤣 코믹/개그</button>
+            </div>
+        </div>
+
+        <div class="selection-section">
+            <span class="section-title">② 그림체 스타일 (Style)</span>
+            <div class="button-group" id="style-group">
+                <button class="option-btn selected" data-value="Modern Korean Webtoon style, vibrant colors">✨ 한국 웹툰 스타일</button>
+                <button class="option-btn" data-value="Japanese Anime style, detailed background">🎬 애니메이션풍</button>
+                <button class="option-btn" data-value="Simple cute doodle style, pastel tones">🖍️ 귀여운 인스타툰</button>
+                <button class="option-btn" data-value="Black and white Manga style">✒️ 흑백 만화</button>
+            </div>
+        </div>
+
+        <div class="selection-section">
+            <span class="section-title">③ 어떤 장면인가요? (Scene)</span>
+            <div class="button-group" id="scene-group">
+                <button class="option-btn selected" data-value="Characters talking to each other in a classroom">🗣️ 친구와 대화 중</button>
+                <button class="option-btn" data-value="A character crying with sad emotion">😭 슬퍼서 우는 장면</button>
+                <button class="option-btn" data-value="Characters running excitedly in the playground">🏃 운동장에서 뛰는 장면</button>
+                <button class="option-btn" data-value="A magical moment with glowing effects">🌟 마법이 일어나는 순간</button>
+            </div>
+        </div>
+
+        <button class="generate-btn" onclick="generatePrompt()">🎨 웹툰 그림 주문서 만들기!</button>
+
+        <div class="result-area" id="resultArea">
+            <h3>📜 AI에게 이렇게 시키세요!</h3>
+            <textarea id="promptOutput" readonly></textarea>
+            
+            <div class="action-buttons">
+                <button class="btn-copy" onclick="copyToClipboard()">📄 복사하기</button>
+            </div>
+            
+            <hr style="margin: 20px 0; border:none; border-top:1px dashed #ddd;">
+            
+            <p style="font-weight:bold; color:#f57f17; margin-bottom:10px;">🚀 그림 그리고 말풍선 넣기</p>
+            <div class="action-buttons">
+                <a href="https://aitestkitchen.withgoogle.com/tools/image-fx" target="_blank" class="btn-link" style="background:#4285F4;">🎨 그림 생성 (Google)</a>
+                <a href="https://www.bing.com/images/create" target="_blank" class="btn-link" style="background:#00897b;">🖼️ 그림 생성 (Bing)</a>
+                <a href="https://www.canva.com/" target="_blank" class="btn-link" style="background:#7E22CE;">💬 말풍선 편집 (Canva)</a>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let currentGenre = "School Life slice of life";
+        let currentStyle = "Modern Korean Webtoon style, vibrant colors";
+        let currentScene = "Characters talking to each other in a classroom";
+
+        function setupSelection(groupId, variableName) {
+            const group = document.getElementById(groupId);
+            const buttons = group.querySelectorAll('.option-btn');
+
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    buttons.forEach(btn => btn.classList.remove('selected'));
+                    button.classList.add('selected');
+                    const val = button.getAttribute('data-value');
+                    if (variableName === 'genre') currentGenre = val;
+                    if (variableName === 'style') currentStyle = val;
+                    if (variableName === 'scene') currentScene = val;
+                });
+            });
+        }
+
+        setupSelection('genre-group', 'genre');
+        setupSelection('style-group', 'style');
+        setupSelection('scene-group', 'scene');
+
+        function generatePrompt() {
+            const resultArea = document.getElementById('resultArea');
+            const outputBox = document.getElementById('promptOutput');
+
+            // ★ 웹툰 전용 프롬프트 템플릿 ★
+            // 4컷 만화 레이아웃(4-panel comic strip layout)이라는 단어를 넣어주면 칸 만화처럼 그려주기도 합니다.
+            const masterTemplate = `A high-quality webtoon scene. Genre: ${currentGenre}. Scene description: ${currentScene}. Style: ${currentStyle}. High resolution, 2D illustration, clean lines, expressive characters.`;
+
+            outputBox.value = masterTemplate;
+            resultArea.classList.add('show');
+            resultArea.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function copyToClipboard() {
+            const outputBox = document.getElementById('promptOutput');
+            outputBox.select();
+            document.execCommand('copy');
+            alert("주문서가 복사되었습니다! \n그림 생성 사이트로 가서 붙여넣기 하세요. 🎨");
+        }
+    </script>
+</body>
+</html>

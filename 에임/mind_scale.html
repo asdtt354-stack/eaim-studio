@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EAIM 마음 저울 & 웹툰 스튜디오</title>
+    <style>
+        /* 1. 공통 스타일 */
+        body {
+            font-family: 'Pretendard', 'Malgun Gothic', sans-serif;
+            background-color: #e0f2f1; /* 차분한 민트 배경 */
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        h1, h2, h3 { color: #00695c; margin-bottom: 10px; }
+        p { color: #555; margin-bottom: 20px; }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* 2. 섹션 디자인 (카드 형태) */
+        .section-box {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* --- [PART 1] 마음 저울 스타일 --- */
+        .stage {
+            height: 300px;
+            background: #f1f8e9;
+            border-radius: 15px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            margin-bottom: 20px;
+            border: 2px solid #c5e1a5;
+        }
+
+        .stand { width: 10px; height: 180px; background: #455a64; position: absolute; bottom: 20px; }
+        .beam {
+            width: 400px; height: 10px; background: #37474f; position: absolute; bottom: 190px;
+            transition: transform 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: center;
+            transform: rotate(-20deg); /* 초기: 기울어짐 */
+            border-radius: 5px;
+        }
+        .plate { width: 100px; height: 10px; background: #78909c; position: absolute; top: 40px; }
+        .plate-left { left: 0; border-bottom: 4px solid #ef5350; }
+        .plate-right { right: 0; border-bottom: 4px solid #42a5f5; }
+        .string { width: 2px; height: 40px; background: #b0bec5; position: absolute; top: 0; }
+        .s-left { left: 10px; } .s-right { right: 10px; }
+
+        .character { font-size: 50px; position: absolute; bottom: 10px; left: 20px; transition: all 0.5s; }
+        .muto { animation: shake 2s infinite; }
+        @keyframes shake { 0% { transform: rotate(0deg); } 25% { transform: rotate(-5deg); } 75% { transform: rotate(5deg); } 100% { transform: rotate(0deg); } }
+
+        .drop-zone {
+            width: 110px; height: 110px; position: absolute; right: -5px; top: 30px;
+            border: 3px dashed #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        }
+        .drop-zone.highlight { border-color: #26a69a; background-color: rgba(38, 166, 154, 0.1); }
+
+        .card-container { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px;}
+        .card {
+            width: 80px; height: 110px; border-radius: 10px; background: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: grab;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border-bottom: 4px solid transparent; transition: transform 0.2s;
+        }
+        .card:hover { transform: translateY(-5px); }
+        .card-icon { font-size: 30px; }
+        .card-title { font-weight: bold; font-size: 14px; margin-top: 5px; }
+        
+        /* 카드 색상 */
+        .c-respect { border-color: #ffca28; }
+        .c-gratitude { border-color: #ff7043; }
+        .c-conscience { border-color: #42a5f5; }
+        .c-trust { border-color: #66bb6a; }
+        .c-wrong { background: #eceff1; filter: grayscale(100%); }
+
+        /* 피드백 영역 */
+        .feedback { margin-top: 15px; font-weight: bold; min-height: 24px; }
+
+        /* --- [PART 2] 웹툰 스튜디오 스타일 (숨겨져 있음) --- */
+        #webtoon-section {
+            display: none; /* 성공 전에는 안 보임 */
+            background: #fffde7; /* 노란색 포인트 배경 */
+            border: 2px dashed #fbc02d;
+            animation: slideUp 1s;
+        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .wt-options { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin-bottom: 15px; }
+        .wt-btn {
+            padding: 8px 12px; border: 1px solid #ccc; background: white; border-radius: 15px; cursor: pointer; font-size: 13px;
+        }
+        .wt-btn.selected { background: #fbc02d; color: white; border-color: #fbc02d; font-weight: bold; }
+        
+        .generate-btn {
+            width: 100%; padding: 12px; background: #f57f17; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px;
+        }
+        .generate-btn:hover { background: #e65100; }
+
+        textarea { width: 90%; height: 60px; margin-top: 10px; padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-size: 12px; }
+
+        /* 링크 버튼들 */
+        .link-group { margin-top: 10px; display: flex; justify-content: center; gap: 10px; }
+        .link-btn { text-decoration: none; padding: 8px 12px; border-radius: 5px; color: white; font-size: 12px; font-weight: bold; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🏫 EAIM 배움터</h1>
+
+    <div class="section-box">
+        <h2>⚖️ 1단계: 마음의 균형 찾기</h2>
+        <p>욕심쟁이 '뮤토' 때문에 기운 마음을 올바른 가치로 바로잡아주세요.</p>
+
+        <div class="stage">
+            <div class="stand"></div>
+            <div class="beam" id="beam">
+                <div class="string s-left">
+                    <div class="plate plate-left">
+                        <div class="character muto">👿</div>
+                    </div>
+                </div>
+                <div class="string s-right">
+                    <div class="plate plate-right">
+                        <div class="drop-zone" id="dropZone">놓기</div>
+                        <div class="character" id="placedIcon" style="opacity:0;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="feedback" id="feedbackMsg" style="color:#d32f2f;">"내 마음대로 할 거야!" (불협화음 🎵)</div>
+
+        <div class="card-container">
+            <div class="card c-respect" draggable="true" id="val-respect">
+                <div class="card-icon">🤝</div><div class="card-title">존중(예)</div>
+            </div>
+            <div class="card c-gratitude" draggable="true" id="val-gratitude">
+                <div class="card-icon">💖</div><div class="card-title">감사(효)</div>
+            </div>
+            <div class="card c-wrong" draggable="true" id="val-ignore">
+                <div class="card-icon">🫣</div><div class="card-title">모른척</div>
+            </div>
+            <div class="card c-conscience" draggable="true" id="val-conscience">
+                <div class="card-icon">✨</div><div class="card-title">양심(정직)</div>
+            </div>
+            <div class="card c-trust" draggable="true" id="val-trust">
+                <div class="card-icon">🌳</div><div class="card-title">신뢰(책임)</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-box" id="webtoon-section">
+        <h2>🎨 2단계: 웹툰 작가 데뷔하기</h2>
+        <p>방금 배운 마음의 이야기를 웹툰 장면으로 만들어보세요!</p>
+        
+        <div style="text-align: left; margin-bottom: 10px; font-weight: bold;">① 장면 선택 (Scene)</div>
+        <div class="wt-options" id="scene-group">
+            <button class="wt-btn selected" data-val="Solving conflict with honesty">✨ 정직하게 사과하는 장면</button>
+            <button class="wt-btn" data-val="Friends hugging and making up">🤝 친구와 화해하는 장면</button>
+            <button class="wt-btn" data-val="Family having a happy dinner">💖 가족과 행복한 저녁</button>
+            <button class="wt-btn" data-val="Student studying responsibly">📚 책임감 있게 공부하는 모습</button>
+        </div>
+
+        <div style="text-align: left; margin-bottom: 10px; font-weight: bold;">② 그림체 (Style)</div>
+        <div class="wt-options" id="style-group">
+            <button class="wt-btn selected" data-val="Korean Webtoon style">🇰🇷 웹툰 스타일</button>
+            <button class="wt-btn" data-val="Cute cartoon style">🖍️ 귀여운 만화</button>
+            <button class="wt-btn" data-val="Studio Ghibli style">🎬 지브리 감성</button>
+        </div>
+
+        <button class="generate-btn" onclick="makePrompt()">🪄 그림 주문서(프롬프트) 생성!</button>
+
+        <textarea id="promptOut" readonly placeholder="버튼을 누르면 여기에 주문서가 나옵니다."></textarea>
+        
+        <div class="link-group">
+            <a href="javascript:void(0)" onclick="copyText()" class="link-btn" style="background:#607d8b;">📄 복사하기</a>
+            <a href="https://aitestkitchen.withgoogle.com/tools/image-fx" target="_blank" class="link-btn" style="background:#4285F4;">🎨 구글 ImageFX로 그리기</a>
+            <a href="https://www.canva.com/" target="_blank" class="link-btn" style="background:#7b1fa2;">💬 캔바(말풍선)</a>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    /* --- 1. 마음 저울 로직 --- */
+    const beam = document.getElementById('beam');
+    const dropZone = document.getElementById('dropZone');
+    const feedback = document.getElementById('feedbackMsg');
+    const placedIcon = document.getElementById('placedIcon');
+    const webtoonSection = document.getElementById('webtoon-section');
+
+    document.querySelectorAll('.card').forEach(c => {
+        c.addEventListener('dragstart', e => e.dataTransfer.setData('id', c.id));
+    });
+
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('highlight'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('highlight'));
+
+    dropZone.addEventListener('drop', e => {
+        e.preventDefault();
+        dropZone.classList.remove('highlight');
+        const id = e.dataTransfer.getData('id');
+        checkBalance(id);
+    });
+
+    function checkBalance(id) {
+        if (id === 'val-ignore') {
+            // 오답
+            beam.style.transform = 'rotate(-20deg)';
+            feedback.innerHTML = "회피는 답이 아닙니다. 다시 생각해보세요. (불협화음 🎼)";
+            feedback.style.color = "#d32f2f";
+            placedIcon.style.opacity = 0;
+        } else {
+            // 정답 (어떤 긍정 가치든 성공)
+            let text = "";
+            let icon = "";
+            if(id === 'val-respect') { text="존중"; icon="🤝"; }
+            if(id === 'val-gratitude') { text="감사"; icon="💖"; }
+            if(id === 'val-conscience') { text="양심"; icon="✨"; }
+            if(id === 'val-trust') { text="신뢰"; icon="🌳"; }
+
+            // 성공 효과
+            beam.style.transform = 'rotate(0deg)'; // 수평
+            placedIcon.innerHTML = icon;
+            placedIcon.style.opacity = 1;
+            
+            feedback.innerHTML = `성공! <b>[${text}]</b>의 힘으로 마음의 평화를 찾았습니다! (아름다운 화음 🎶)`;
+            feedback.style.color = "#00695c";
+
+            // ★ 핵심: 웹툰 섹션 등장 ★
+            if (webtoonSection.style.display !== 'block') {
+                setTimeout(() => {
+                    webtoonSection.style.display = 'block';
+                    webtoonSection.scrollIntoView({ behavior: 'smooth' });
+                    alert("축하합니다! 🎉\n이 멋진 이야기를 웹툰으로 그려볼까요?\n아래 '웹툰 작가 데뷔하기'가 열렸습니다!");
+                }, 1000);
+            }
+        }
+    }
+
+    /* --- 2. 웹툰 프롬프트 로직 --- */
+    let wtScene = "Solving conflict with honesty";
+    let wtStyle = "Korean Webtoon style";
+
+    // 버튼 선택 함수
+    function setOptionListener(groupId, varType) {
+        const group = document.getElementById(groupId);
+        group.querySelectorAll('.wt-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                group.querySelectorAll('.wt-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                if(varType === 'scene') wtScene = btn.getAttribute('data-val');
+                if(varType === 'style') wtStyle = btn.getAttribute('data-val');
+            });
+        });
+    }
+    setOptionListener('scene-group', 'scene');
+    setOptionListener('style-group', 'style');
+
+    function makePrompt() {
+        const out = document.getElementById('promptOut');
+        out.value = `A high quality webtoon illustration. Scene: ${wtScene}. Style: ${wtStyle}, vibrant colors, expressive characters, detailed background. 2D art.`;
+    }
+
+    function copyText() {
+        const out = document.getElementById('promptOut');
+        out.select();
+        document.execCommand('copy');
+        alert("주문서 복사 완료! \n그림 도구로 이동해서 붙여넣으세요.");
+    }
+
+</script>
+
+</body>
+</html>

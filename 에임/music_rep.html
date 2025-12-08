@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Music Activity Final (Fixed)</title>
+<style>
+    /* 1. 기본 스타일 */
+    body { font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; background: #eef2f5; padding: 20px; margin: 0; color:#333; line-height: 1.6; }
+    .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 15px; border: 1px solid #ccc; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    h1 { text-align: center; border-bottom: 3px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+    h2 { background: #e3f2fd; padding: 12px; color: #1565c0; margin-top: 30px; font-size: 19px; border-radius: 8px; }
+    .page { display: none; } 
+    
+    /* 2. 입력창 */
+    input[type="text"], textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 15px; }
+    textarea { height: 80px; resize: vertical; }
+
+    /* 3. 라디오 버튼 (클릭 보장 - 직접 코딩) */
+    input[type="radio"] { display: none; }
+    
+    /* 감정 단어 디자인 */
+    .word-box { display: flex; flex-wrap: wrap; gap: 6px; }
+    .check-label {
+        display: inline-block; padding: 8px 14px; background: white; border: 1px solid #bbb; border-radius: 20px;
+        cursor: pointer; font-size: 14px; transition: 0.1s; user-select: none;
+    }
+    .check-label:hover { background: #f0f0f0; }
+    input[type="radio"]:checked + .check-label {
+        background: #2196F3; color: white; border-color: #2196F3; font-weight: bold; transform: scale(1.05); box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    /* 색깔 버튼 디자인 (확실하게 클릭되도록 수정) */
+    .color-box { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+    .color-label { display: inline-block; text-align: center; cursor: pointer; width: 50px; vertical-align: top; }
+    .color-circle { 
+        width: 40px; height: 40px; border-radius: 50%; border: 3px solid #eee; display: block; margin: 0 auto 5px; 
+        box-sizing: border-box; /* 테두리 포함 크기 계산 */
+    }
+    .color-name { font-size: 12px; color: #666; font-weight: bold; }
+    
+    /* 선택되었을 때 효과 */
+    input[type="radio"]:checked + .color-label .color-circle { 
+        border: 4px solid #333; transform: scale(1.15); box-shadow: 0 0 8px rgba(0,0,0,0.3);
+    }
+    input[type="radio"]:checked + .color-label .color-name { color: #2196F3; }
+
+    /* 4. 별점 */
+    .star-box { font-size: 24px; color: #ddd; cursor: pointer; user-select: none; display: flex; gap: 10px; }
+    .star-label { cursor: pointer; }
+    input[type="radio"]:checked + .star-label { color: #f1c40f; transform: scale(1.2); text-shadow: 0 0 5px #f1c40f; }
+
+    /* 5. 버튼 */
+    .nav-box { margin-top: 40px; text-align: right; border-top: 2px solid #eee; padding-top: 20px; }
+    .btn { padding: 12px 25px; background: #2196F3; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; }
+    .prev { background: #90a4ae; float: left; }
+    .ai-btn { background: linear-gradient(135deg, #6c5ce7, #a29bfe); width: 100%; margin-top: 20px; font-size: 18px; padding: 15px; }
+
+    /* 6. 캔버스 & 로딩 */
+    canvas { border: 2px dashed #999; background: white; width: 100%; display: block; cursor: crosshair; margin-top: 10px; }
+    #loading { display: none; text-align: center; padding: 50px; }
+    .spinner { width: 40px; height: 40px; border: 5px solid #f3f3f3; border-top: 5px solid #6c5ce7; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    
+    @media print { .btn, .nav-box { display: none; } body { padding: 0; background: white; } .container { border: none; box-shadow: none; } }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🎵 음악 감상 활동지</h1>
+
+    <div id="p1" class="page" style="display: block;">
+        <div style="background:#f8f9fa; padding:15px; border-radius:10px; display:flex; gap:10px; margin-bottom:20px;">
+            <input type="text" id="gr" placeholder="학년" style="width:60px; text-align:center;">
+            <input type="text" id="cl" placeholder="반" style="width:60px; text-align:center;">
+            <input type="text" id="num" placeholder="번호" style="width:60px; text-align:center;">
+            <input type="text" id="nm" placeholder="이름 (필수)" style="flex-grow:1;">
+        </div>
+
+        <h2>Step 1. 만남과 준비</h2>
+        <label><strong>곡 제목</strong></label><input type="text" id="ti">
+        <label><strong>작곡가</strong></label><input type="text" id="cp">
+        <label><strong>배경 지식</strong></label><textarea id="bg" placeholder="이 곡에 대해 알고 있는 점이 있나요?"></textarea>
+        
+        <hr style="margin: 20px 0;">
+        <p><strong>1. 감상 전 기분</strong></p>
+        <div class="word-box">
+            <input type="radio" name="e1" id="e1_1" value="피곤한"><label for="e1_1" class="check-label">피곤한</label>
+            <input type="radio" name="e1" id="e1_2" value="신나는"><label for="e1_2" class="check-label">신나는</label>
+            <input type="radio" name="e1" id="e1_3" value="평온한"><label for="e1_3" class="check-label">평온한</label>
+            <input type="radio" name="e1" id="e1_4" value="배고픈"><label for="e1_4" class="check-label">배고픈</label>
+            <input type="radio" name="e1" id="e1_5" value="짜증난"><label for="e1_5" class="check-label">짜증난</label>
+            <input type="radio" name="e1" id="e1_6" value="설레는"><label for="e1_6" class="check-label">설레는</label>
+            <input type="radio" name="e1" id="e1_7" value="우울한"><label for="e1_7" class="check-label">우울한</label>
+            <input type="radio" name="e1" id="e1_8" value="심심한"><label for="e1_8" class="check-label">심심한</label>
+            <input type="radio" name="e1" id="e1_9" value="긴장된"><label for="e1_9" class="check-label">긴장된</label>
+            <input type="radio" name="e1" id="e1_10" value="행복한"><label for="e1_10" class="check-label">행복한</label>
+            <input type="radio" name="e1" id="e1_11" value="졸린"><label for="e1_11" class="check-label">졸린</label>
+            <input type="radio" name="e1" id="e1_12" value="기대되는"><label for="e1_12" class="check-label">기대되는</label>
+            <input type="radio" name="e1" id="e1_13" value="멍한"><label for="e1_13" class="check-label">멍한</label>
+            <input type="radio" name="e1" id="e1_14" value="상쾌한"><label for="e1_14" class="check-label">상쾌한</label>
+            <input type="radio" name="e1" id="e1_15" value="걱정되는"><label for="e1_15" class="check-label">걱정되는</label>
+            <input type="radio" name="e1" id="e1_16" value="편안한"><label for="e1_16" class="check-label">편안한</label>
+            <input type="radio" name="e1" id="e1_17" value="답답한"><label for="e1_17" class="check-label">답답한</label>
+            <input type="radio" name="e1" id="e1_18" value="지루한"><label for="e1_18" class="check-label">지루한</label>
+            <input type="radio" name="e1" id="e1_19" value="즐거운"><label for="e1_19" class="check-label">즐거운</label>
+            <input type="radio" name="e1" id="e1_20" value="뿌듯한"><label for="e1_20" class="check-label">뿌듯한</label>
+        </div>
+
+        <p style="margin-top:20px;"><strong>2. 감상 전 마음 색깔</strong></p>
+        <div class="color-box">
+            <input type="radio" name="c1" id="c1_1" value="빨강"><label for="c1_1" class="color-label"><span class="color-circle" style="background:#ff4d4d;"></span><span class="color-name">빨강</span></label>
+            <input type="radio" name="c1" id="c1_2" value="주황"><label for="c1_2" class="color-label"><span class="color-circle" style="background:#ff9f43;"></span><span class="color-name">주황</span></label>
+            <input type="radio" name="c1" id="c1_3" value="노랑"><label for="c1_3" class="color-label"><span class="color-circle" style="background:#feca57;"></span><span class="color-name">노랑</span></label>
+            <input type="radio" name="c1" id="c1_4" value="연두"><label for="c1_4" class="color-label"><span class="color-circle" style="background:#badc58;"></span><span class="color-name">연두</span></label>
+            <input type="radio" name="c1" id="c1_5" value="초록"><label for="c1_5" class="color-label"><span class="color-circle" style="background:#6ab04c;"></span><span class="color-name">초록</span></label>
+            <input type="radio" name="c1" id="c1_6" value="청록"><label for="c1_6" class="color-label"><span class="color-circle" style="background:#1abc9c;"></span><span class="color-name">청록</span></label>
+            <input type="radio" name="c1" id="c1_7" value="하늘"><label for="c1_7" class="color-label"><span class="color-circle" style="background:#48dbfb;"></span><span class="color-name">하늘</span></label>
+            <input type="radio" name="c1" id="c1_8" value="파랑"><label for="c1_8" class="color-label"><span class="color-circle" style="background:#2e86de;"></span><span class="color-name">파랑</span></label>
+            <input type="radio" name="c1" id="c1_9" value="남색"><label for="c1_9" class="color-label"><span class="color-circle" style="background:#2c3e50;"></span><span class="color-name">남색</span></label>
+            <input type="radio" name="c1" id="c1_10" value="보라"><label for="c1_10" class="color-label"><span class="color-circle" style="background:#a55eea;"></span><span class="color-name">보라</span></label>
+            <input type="radio" name="c1" id="c1_11" value="분홍"><label for="c1_11" class="color-label"><span class="color-circle" style="background:#ff9ff3;"></span><span class="color-name">분홍</span></label>
+            <input type="radio" name="c1" id="c1_12" value="갈색"><label for="c1_12" class="color-label"><span class="color-circle" style="background:#8d6e63;"></span><span class="color-name">갈색</span></label>
+            <input type="radio" name="c1" id="c1_13" value="회색"><label for="c1_13" class="color-label"><span class="color-circle" style="background:#95a5a6;"></span><span class="color-name">회색</span></label>
+            <input type="radio" name="c1" id="c1_14" value="검정"><label for="c1_14" class="color-label"><span class="color-circle" style="background:#2d3436;"></span><span class="color-name">검정</span></label>
+            <input type="radio" name="c1" id="c1_15" value="흰색"><label for="c1_15" class="color-label"><span class="color-circle" style="background:#ffffff; border:1px solid #ccc;"></span><span class="color-name">흰색</span></label>
+        </div>
+
+        <div class="nav-box"><button class="btn" onclick="mv(2)">다음 ➜</button></div>
+    </div>
+
+    <div id="p2" class="page">
+        <h2>Step 2. 귀로 듣는 탐험</h2>
+        <label><strong>1. 악기 소리</strong></label><input type="text" id="q1" placeholder="가장 잘 들리는 악기는?">
+        <label><strong>2. 속도와 리듬</strong></label><input type="text" id="q2" placeholder="빠른가요? 경쾌한가요?">
+        <label><strong>3. 강약 조절</strong></label><input type="text" id="q3" placeholder="점점 웅장해지나요?">
+        <label><strong>4. 멜로디</strong></label><input type="text" id="q4" placeholder="기억에 남는 멜로디는?">
+        
+        <label style="color:#2196F3;"><strong>★ 5. 곡의 분위기</strong></label><input type="text" id="q5" placeholder="밝음, 어두움, 신비로움 등">
+        <label style="color:#2196F3;"><strong>★ 6. 연주 방식</strong></label><input type="text" id="q6" placeholder="부드럽게 이어짐, 뚝뚝 끊어짐 등">
+        
+        <div class="nav-box"><button class="btn prev" onclick="mv(1)">이전</button><button class="btn" onclick="mv(3)">다음 ➜</button></div>
+    </div>
+
+    <div id="p3" class="page">
+        <h2>Step 3. 마음으로 느끼기</h2>
+        <p><strong>1. 감정 그래프 (그리기)</strong></p>
+        <canvas id="cv" width="700" height="200"></canvas>
+        <button onclick="clr()" style="margin-top:5px; padding:5px;">지우개</button>
+
+        <label style="margin-top:20px; display:block; color:#2196F3;"><strong>★ 2. 상상되는 장면</strong></label>
+        <textarea id="q7" placeholder="이 음악이 배경음악이라면 어떤 장면일까요? (예: 비 오는 숲속, 전투 장면)"></textarea>
+
+        <p style="margin-top:20px;"><strong>3. 감상 후 색깔</strong></p>
+        <div class="color-box">
+            <input type="radio" name="c2" id="c2_1" value="빨강"><label for="c2_1" class="color-label"><span class="color-circle" style="background:#ff4d4d;"></span><span class="color-name">빨강</span></label>
+            <input type="radio" name="c2" id="c2_2" value="주황"><label for="c2_2" class="color-label"><span class="color-circle" style="background:#ff9f43;"></span><span class="color-name">주황</span></label>
+            <input type="radio" name="c2" id="c2_3" value="노랑"><label for="c2_3" class="color-label"><span class="color-circle" style="background:#feca57;"></span><span class="color-name">노랑</span></label>
+            <input type="radio" name="c2" id="c2_4" value="연두"><label for="c2_4" class="color-label"><span class="color-circle" style="background:#badc58;"></span><span class="color-name">연두</span></label>
+            <input type="radio" name="c2" id="c2_5" value="초록"><label for="c2_5" class="color-label"><span class="color-circle" style="background:#6ab04c;"></span><span class="color-name">초록</span></label>
+            <input type="radio" name="c2" id="c2_6" value="청록"><label for="c2_6" class="color-label"><span class="color-circle" style="background:#1abc9c;"></span><span class="color-name">청록</span></label>
+            <input type="radio" name="c2" id="c2_7" value="하늘"><label for="c2_7" class="color-label"><span class="color-circle" style="background:#48dbfb;"></span><span class="color-name">하늘</span></label>
+            <input type="radio" name="c2" id="c2_8" value="파랑"><label for="c2_8" class="color-label"><span class="color-circle" style="background:#2e86de;"></span><span class="color-name">파랑</span></label>
+            <input type="radio" name="c2" id="c2_9" value="남색"><label for="c2_9" class="color-label"><span class="color-circle" style="background:#2c3e50;"></span><span class="color-name">남색</span></label>
+            <input type="radio" name="c2" id="c2_10" value="보라"><label for="c2_10" class="color-label"><span class="color-circle" style="background:#a55eea;"></span><span class="color-name">보라</span></label>
+            <input type="radio" name="c2" id="c2_11" value="분홍"><label for="c2_11" class="color-label"><span class="color-circle" style="background:#ff9ff3;"></span><span class="color-name">분홍</span></label>
+            <input type="radio" name="c2" id="c2_12" value="갈색"><label for="c2_12" class="color-label"><span class="color-circle" style="background:#8d6e63;"></span><span class="color-name">갈색</span></label>
+            <input type="radio" name="c2" id="c2_13" value="회색"><label for="c2_13" class="color-label"><span class="color-circle" style="background:#95a5a6;"></span><span class="color-name">회색</span></label>
+            <input type="radio" name="c2" id="c2_14" value="검정"><label for="c2_14" class="color-label"><span class="color-circle" style="background:#2d3436;"></span><span class="color-name">검정</span></label>
+            <input type="radio" name="c2" id="c2_15" value="흰색"><label for="c2_15" class="color-label"><span class="color-circle" style="background:#ffffff; border:1px solid #ccc;"></span><span class="color-name">흰색</span></label>
+        </div>
+
+        <p style="margin-top:20px;"><strong>4. 감상 후 감정</strong></p>
+        <div class="word-box">
+            <input type="radio" name="e2" id="e2_1" value="벅차오르는"><label for="e2_1" class="check-label">벅차오르는</label>
+            <input type="radio" name="e2" id="e2_2" value="행복한"><label for="e2_2" class="check-label">행복한</label>
+            <input type="radio" name="e2" id="e2_3" value="상쾌한"><label for="e2_3" class="check-label">상쾌한</label>
+            <input type="radio" name="e2" id="e2_4" value="신나는"><label for="e2_4" class="check-label">신나는</label>
+            <input type="radio" name="e2" id="e2_5" value="편안한"><label for="e2_5" class="check-label">편안한</label>
+            <input type="radio" name="e2" id="e2_6" value="차분한"><label for="e2_6" class="check-label">차분한</label>
+            <input type="radio" name="e2" id="e2_7" value="따뜻한"><label for="e2_7" class="check-label">따뜻한</label>
+            <input type="radio" name="e2" id="e2_8" value="몽환적인"><label for="e2_8" class="check-label">몽환적인</label>
+            <input type="radio" name="e2" id="e2_9" value="신비로운"><label for="e2_9" class="check-label">신비로운</label>
+            <input type="radio" name="e2" id="e2_10" value="웅장한"><label for="e2_10" class="check-label">웅장한</label>
+            <input type="radio" name="e2" id="e2_11" value="그리운"><label for="e2_11" class="check-label">그리운</label>
+            <input type="radio" name="e2" id="e2_12" value="슬픈"><label for="e2_12" class="check-label">슬픈</label>
+            <input type="radio" name="e2" id="e2_13" value="우울한"><label for="e2_13" class="check-label">우울한</label>
+            <input type="radio" name="e2" id="e2_14" value="외로운"><label for="e2_14" class="check-label">외로운</label>
+            <input type="radio" name="e2" id="e2_15" value="무서운"><label for="e2_15" class="check-label">무서운</label>
+            <input type="radio" name="e2" id="e2_16" value="긴장되는"><label for="e2_16" class="check-label">긴장되는</label>
+            <input type="radio" name="e2" id="e2_17" value="비장한"><label for="e2_17" class="check-label">비장한</label>
+            <input type="radio" name="e2" id="e2_18" value="답답한"><label for="e2_18" class="check-label">답답한</label>
+            <input type="radio" name="e2" id="e2_19" value="화난"><label for="e2_19" class="check-label">화난</label>
+            <input type="radio" name="e2" id="e2_20" value="짜증난"><label for="e2_20" class="check-label">짜증난</label>
+            <input type="radio" name="e2" id="e2_21" value="지루한"><label for="e2_21" class="check-label">지루한</label>
+            <input type="radio" name="e2" id="e2_22" value="놀라운"><label for="e2_22" class="check-label">놀라운</label>
+            <input type="radio" name="e2" id="e2_23" value="충격적인"><label for="e2_23" class="check-label">충격적인</label>
+            <input type="radio" name="e2" id="e2_24" value="감동적인"><label for="e2_24" class="check-label">감동적인</label>
+            <input type="radio" name="e2" id="e2_25" value="사랑스런"><label for="e2_25" class="check-label">사랑스런</label>
+            <input type="radio" name="e2" id="e2_26" value="활기찬"><label for="e2_26" class="check-label">활기찬</label>
+            <input type="radio" name="e2" id="e2_27" value="멍한"><label for="e2_27" class="check-label">멍한</label>
+            <input type="radio" name="e2" id="e2_28" value="기대되는"><label for="e2_28" class="check-label">기대되는</label>
+            <input type="radio" name="e2" id="e2_29" value="뿌듯한"><label for="e2_29" class="check-label">뿌듯한</label>
+            <input type="radio" name="e2" id="e2_30" value="자유로운"><label for="e2_30" class="check-label">자유로운</label>
+        </div>
+
+        <div class="nav-box"><button class="btn prev" onclick="mv(2)">이전</button><button class="btn" onclick="mv(4)">다음 ➜</button></div>
+    </div>
+
+    <div id="p4" class="page">
+        <h2>Step 4. 남겨진 여운 (결론)</h2>
+        <label><strong>1. 한 줄 요약</strong></label><input type="text" id="q8" placeholder="이 곡을 한 문장으로 표현한다면?">
+        <label><strong>2. 추천 대상</strong></label><input type="text" id="q9" placeholder="누구에게 추천하고 싶나요?">
+        
+        <p><strong>3. 나의 별점</strong></p>
+        <div class="star-box">
+            <input type="radio" name="st" id="s1" value="1점"><label for="s1" class="star-label">★</label>
+            <input type="radio" name="st" id="s2" value="2점"><label for="s2" class="star-label">★★</label>
+            <input type="radio" name="st" id="s3" value="3점"><label for="s3" class="star-label">★★★</label>
+            <input type="radio" name="st" id="s4" value="4점"><label for="s4" class="star-label">★★★★</label>
+            <input type="radio" name="st" id="s5" value="5점"><label for="s5" class="star-label">★★★★★</label>
+        </div>
+
+        <button class="btn ai-btn" onclick="makeDraft()">📝 초안 문장 만들기</button>
+        <div class="nav-box"><button class="btn prev" onclick="mv(3)">이전</button></div>
+    </div>
+
+    <div id="p5" class="page">
+        <h2>Step 5. 내가 만드는 감상문 (초안)</h2>
+        <p style="color:#666; font-size:14px;">아래 글은 AI가 자동으로 합친 것입니다. <strong>어색한 부분을 직접 수정하고 내용을 더 채워보세요.</strong></p>
+        <textarea id="draft" style="height:400px; padding:20px; border:2px solid #2196F3; font-size:16px; line-height:1.8;"></textarea>
+        
+        <button class="btn ai-btn" onclick="finalAI()">✨ AI에게 다듬기 부탁하기</button>
+        <div class="nav-box"><button class="btn prev" onclick="mv(4)">이전</button></div>
+    </div>
+
+    <div id="p6" class="page">
+        <h2>🎉 완성된 감상문</h2>
+        <div id="loading">
+            <div class="spinner"></div>
+            <h3>AI가 문장을 정돈하고 있습니다...✍️</h3>
+        </div>
+        <div id="final_view" style="display:none;">
+            <textarea id="final_txt" style="height:450px; font-size:16px; line-height:1.9;"></textarea>
+            <div class="nav-box">
+                <button class="btn prev" onclick="mv(5)">다시 고치기</button>
+                <button class="btn" style="background:#27ae60;" onclick="window.print()">🖨️ 인쇄 / 저장</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function mv(n){
+    if(n==2 && (!document.getElementById('ti').value || !document.getElementById('nm').value)){ alert('이름과 곡 제목을 입력하세요'); return; }
+    for(var i=1;i<=6;i++) document.getElementById('p'+i).style.display='none';
+    document.getElementById('p'+n).style.display='block';
+    window.scrollTo(0,0);
+}
+
+function gv(n){ var c=document.querySelector('input[name="'+n+'"]:checked'); return c?c.value:""; }
+function val(id){ return document.getElementById(id).value; }
+
+// 1차 초안 생성 (길게 만들기)
+function makeDraft(){
+    mv(5);
+    var t = "저는 "+val('gr')+"학년 "+val('cl')+"반 "+val('nm')+"입니다.\n";
+    t += "오늘 음악 시간에는 "+(val('cp')?val('cp')+"의 ":"")+"'"+val('ti')+"'을(를) 감상했습니다.\n";
+    if(val('bg')) t += "이 곡에 대해 "+val('bg')+"라는 사실을 미리 알고 들었습니다.\n";
+    t += "음악을 듣기 전, 저의 기분은 대체로 '"+(gv('e1')||"평범")+"'했고, 마음의 색깔은 '"+(gv('c1')||"무색")+"'에 가까웠습니다.\n\n";
+    
+    t += "[본론: 소리 탐색]\n";
+    t += "음악이 시작되고 귀를 기울여 보니, "+val('q1')+" 소리가 가장 먼저 귀에 들어왔습니다. ";
+    t += "곡의 속도는 "+val('q2')+" 느껴졌고, ";
+    t += "소리의 크기는 "+val('q3')+" 변화했습니다. ";
+    t += "특히 "+val('q4')+" 멜로디가 인상 깊었습니다. ";
+    if(val('q5')) t += "전체적인 곡의 분위기는 "+val('q5')+" 느낌이었으며, ";
+    if(val('q6')) t += "연주 방식은 "+val('q6')+" 들렸습니다.\n\n";
+
+    t += "[본론: 마음의 풍경]\n";
+    t += "음악을 들으며 제 감정의 변화를 그래프로 그려보았습니다. ";
+    if(val('q7')) t += "눈을 감고 감상하니 마치 '"+val('q7')+"' 같은 장면이 머릿속에 생생하게 떠올랐습니다. ";
+    t += "감상이 끝난 후, 이 음악은 저에게 '"+(gv('c2')||"새로운")+"' 색깔로 다가왔습니다. ";
+    t += "그리고 마음속 깊이 '"+(gv('e2')||"특별한")+"' 감정을 느끼게 해주었습니다.\n\n";
+
+    t += "[결론: 나의 생각]\n";
+    t += "이 음악을 한 문장으로 정의한다면 \""+val('q8')+"\"(이)라고 표현하고 싶습니다. ";
+    if(val('q9')) t += "저는 이 곡을 "+val('q9')+"에게 추천해주고 싶습니다. ";
+    t += "제 별점은 "+(gv('st')||"0점")+"입니다. 음악을 통해 제 마음을 들여다볼 수 있는 소중한 시간이었습니다.";
+
+    document.getElementById('draft').value = t;
+}
+
+// 최종 AI 다듬기
+function finalAI(){
+    mv(6);
+    document.getElementById('loading').style.display='block';
+    document.getElementById('final_view').style.display='none';
+    
+    var raw = document.getElementById('draft').value;
+    var title = val('ti');
+
+    setTimeout(function(){
+        document.getElementById('loading').style.display='none';
+        document.getElementById('final_view').style.display='block';
+        
+        var txt = "< " + title + " 감상문 >\n\n";
+        // 태그 제거 및 줄바꿈 정리
+        txt += raw.replace(/\[.*?\]/g, "").replace(/\n\n/g, "\n").replace(/\n/g, "\n\n");
+        txt += "\n\n----------------------------------\n";
+        txt += "AI 선생님의 한마디: 작성해주신 내용을 바탕으로 문장을 정돈했습니다.\n생생한 표현이 돋보이는 훌륭한 감상문이네요! 참 잘했습니다! 👏";
+        
+        document.getElementById('final_txt').value = txt;
+    }, 2000);
+}
+
+// 캔버스
+var cv=document.getElementById('cv'), ct=cv.getContext('2d'), dr=false;
+function s(e){dr=true;p(e)} function e(){dr=false;ct.beginPath()}
+function p(e){if(!dr)return;e.preventDefault();var r=cv.getBoundingClientRect(),x=(e.clientX||e.touches[0].clientX)-r.left,y=(e.clientY||e.touches[0].clientY)-r.top;ct.lineWidth=3;ct.lineCap='round';ct.strokeStyle='#2196F3';ct.lineTo(x,y);ct.stroke();ct.beginPath();ct.moveTo(x,y)}
+cv.addEventListener('mousedown',s);cv.addEventListener('mouseup',e);cv.addEventListener('mousemove',p);
+cv.addEventListener('touchstart',s,{passive:false});cv.addEventListener('touchend',e);cv.addEventListener('touchmove',p,{passive:false});
+function clr(){ct.clearRect(0,0,800,200)}
+</script>
+</body>
+</html>

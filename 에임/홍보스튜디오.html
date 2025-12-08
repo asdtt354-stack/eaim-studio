@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EAIM 홍보 스튜디오</title>
+    <style>
+        /* 디자인 스타일 설정 */
+        body {
+            font-family: 'Pretendard', 'Malgun Gothic', sans-serif;
+            background-color: #f0f7ff; /* 밝은 하늘색 배경 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        h2 { color: #0056b3; margin-bottom: 10px; }
+        p.description { color: #666; margin-bottom: 30px; font-size: 14px; }
+
+        /* 선택 섹션 스타일 */
+        .selection-section { margin-bottom: 25px; text-align: left; }
+        .section-title { font-weight: bold; color: #333; margin-bottom: 10px; display: block; }
+        
+        .button-group { display: flex; flex-wrap: wrap; gap: 10px; }
+        .option-btn {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            background: #fff;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            color: #555;
+        }
+        .option-btn:hover { background: #f5f5f5; border-color: #ccc; }
+        /* 선택되었을 때 강조 스타일 */
+        .option-btn.selected {
+            border-color: #0056b3;
+            background-color: #e3f2fd;
+            color: #0056b3;
+            font-weight: bold;
+        }
+
+        /* 생성 버튼 */
+        .generate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(to right, #0056b3, #00a8ff);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-top: 10px;
+        }
+        .generate-btn:hover { transform: scale(1.02); }
+
+        /* 결과 출력 영역 */
+        .result-area {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border: 2px dashed #ccc;
+            display: none; /* 처음엔 숨김 */
+        }
+        .result-area.show { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        textarea {
+            width: 95%;
+            height: 100px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            resize: none;
+            font-family: monospace;
+            font-size: 12px;
+            margin-bottom: 10px;
+            background: #fff;
+        }
+
+        /* 액션 버튼 (복사, 이동) */
+        .action-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 15px; flex-wrap: wrap;}
+        .btn-copy { background: #4CAF50; color: white; }
+        .btn-link { background: #FF5722; color: white; text-decoration: none; display: inline-block;}
+        .action-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: opacity 0.2s;
+        }
+        .action-btn:hover { opacity: 0.9; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>🎨 EAIM 홍보 스튜디오</h2>
+        <p class="description">버튼을 눌러 나만의 멋진 포스터/티저 프롬프트를 만들어보세요!</p>
+
+        <div class="selection-section">
+            <span class="section-title">① 주제를 선택해요 (Theme)</span>
+            <div class="button-group" id="theme-group">
+                <button class="option-btn selected" data-value="friendship and harmony">우정과 화합</button>
+                <button class="option-btn" data-value="honesty and courage">정직과 용기</button>
+                <button class="option-btn" data-value="nature and environment">자연과 환경</button>
+                <button class="option-btn" data-value="family love">가족 사랑</button>
+            </div>
+        </div>
+
+        <div class="selection-section">
+            <span class="section-title">② 분위기를 정해요 (Style)</span>
+            <div class="button-group" id="style-group">
+                <button class="option-btn selected" data-value="whimsical fairytale book illustration, warm colors">따뜻한 동화책</button>
+                <button class="option-btn" data-value="cinematic Studio Ghibli anime style, magical atmosphere">지브리 애니메이션</button>
+                <button class="option-btn" data-value="vibrant Disney Pixar 3D animation style">디즈니/픽사 3D</button>
+                <button class="option-btn" data-value="dreamy watercolor painting, soft light">몽환적인 수채화</button>
+            </div>
+        </div>
+
+        <div class="selection-section">
+            <span class="section-title">③ 주인공은 누구인가요? (Subject)</span>
+            <div class="button-group" id="subject-group">
+                <button class="option-btn selected" data-value="cute music fairies (Muji, Muni) singing on a stage">뮤지&뮤니 (음악요정)</button>
+                <button class="option-btn" data-value="a magical glowing EAIM Tree with musical fruit">EAIM 생명의 나무</button>
+                <button class="option-btn" data-value="diverse happy children holding hands">행복한 아이들</button>
+                <button class="option-btn" data-value="a mischievous but cute goblin character">장난꾸러기 도깨비(뮤토)</button>
+            </div>
+        </div>
+
+        <button class="generate-btn" onclick="generatePrompt()">✨ 마법의 주문서(프롬프트) 만들기! ✨</button>
+
+        <div class="result-area" id="resultArea">
+            <h3>📜 완성된 주문서 (영어)</h3>
+            <p style="font-size:12px; color:#666; margin-bottom:5px;">👇 아래 상자의 내용을 복사해서 AI 도구에 붙여넣으세요!</p>
+            <textarea id="promptOutput" readonly></textarea>
+            
+            <div class="action-buttons">
+                <button class="action-btn btn-copy" onclick="copyToClipboard()">📄 주문서 복사하기</button>
+            </div>
+            
+            <hr style="margin: 20px 0; border:none; border-top:1px dashed #ddd;">
+            
+            <p style="font-weight:bold; color:#0056b3; margin-bottom:10px;">🚀 어디 가서 만들까요? (복사 후 클릭!)</p>
+            <div class="action-buttons">
+                <a href="https://aitestkitchen.withgoogle.com/tools/image-fx" target="_blank" class="action-btn btn-link" style="background:#4285F4;">🎨 구글 ImageFX (추천)</a>
+                <a href="https://gemini.google.com/" target="_blank" class="action-btn btn-link" style="background: linear-gradient(45deg, #4285F4, #9B72CB);">🤖 제미나이 (Gemini)</a>
+                <a href="https://wrtn.ai/" target="_blank" class="action-btn btn-link" style="background:#FF5722;">🇰🇷 뤼튼 (Wrtn)</a>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 자바스크립트 로직 ---
+
+        // 1. 현재 선택된 값들을 저장할 변수 (기본값 설정)
+        let currentTheme = "friendship and harmony";
+        let currentStyle = "whimsical fairytale book illustration, warm colors";
+        let currentSubject = "cute music fairies (Muji, Muni) singing on a stage";
+
+        // 2. 버튼 선택 기능 초기화
+        function setupSelection(groupId, variableName) {
+            const group = document.getElementById(groupId);
+            const buttons = group.querySelectorAll('.option-btn');
+
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // 기존 선택 해제
+                    buttons.forEach(btn => btn.classList.remove('selected'));
+                    // 현재 버튼 선택
+                    button.classList.add('selected');
+                    // 변수 업데이트
+                    if (variableName === 'theme') currentTheme = button.getAttribute('data-value');
+                    if (variableName === 'style') currentStyle = button.getAttribute('data-value');
+                    if (variableName === 'subject') currentSubject = button.getAttribute('data-value');
+                });
+            });
+        }
+
+        setupSelection('theme-group', 'theme');
+        setupSelection('style-group', 'style');
+        setupSelection('subject-group', 'subject');
+
+
+        // 3. 프롬프트 생성 함수 (핵심!)
+        function generatePrompt() {
+            const resultArea = document.getElementById('resultArea');
+            const outputBox = document.getElementById('promptOutput');
+
+            // ★ 마스터 프롬프트 템플릿 (이 틀에 선택한 단어가 들어갑니다) ★
+            // 티저 영상 썸네일이나 포스터로 쓰기 좋은 고품질 이미지 프롬프트입니다.
+            const masterTemplate = `A high-quality poster illustration for an educational teaser. Style: ${currentStyle}. The main subject is ${currentSubject}, focusing on the theme of ${currentTheme}. The scene is magical, detailed, with soft glowing lights and cheerful atmosphere. 8k resolution, highly detailed.`;
+
+            // 결과창에 표시
+            outputBox.value = masterTemplate;
+            resultArea.classList.add('show'); // 결과창 보여주기
+
+            // 화면 스크롤 이동
+            resultArea.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 4. 복사하기 기능
+        function copyToClipboard() {
+            const outputBox = document.getElementById('promptOutput');
+            outputBox.select();
+            document.execCommand('copy');
+            alert("주문서가 복사되었습니다! \n이제 아래 AI 도구 버튼을 눌러 이동한 뒤 붙여넣기(Ctrl+V) 하세요. 📋");
+        }
+
+    </script>
+</body>
+</html>
