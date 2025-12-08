@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>무니와 과학 마법사 - 행성들의 춤 (최종 수정)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&family=Gaegu&display=swap');
+
+        /* 게임 화면은 스크롤 금지, 일지는 스크롤 허용 */
+        body { margin: 0; background-color: #0b0b15; color: white; font-family: 'Noto Serif KR', serif; overflow: hidden; }
+
+        /* [화면 1] 우주 시뮬레이션 */
+        #space-container {
+            position: relative; width: 100vw; height: 100vh;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .star { position: absolute; background: white; border-radius: 50%; opacity: 0.5; animation: twinkle 3s infinite; }
+        @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+        canvas { z-index: 10; }
+
+        /* UI 레이어 */
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 20; pointer-events: none; }
+        
+        #dialogue-box {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            width: 85%; max-width: 800px; background: rgba(0, 0, 0, 0.6); border: 2px solid #ffca28;
+            border-radius: 20px; padding: 20px; display: flex; align-items: center; pointer-events: auto;
+            color: #fff; transition: opacity 0.5s;
+        }
+        #char-img { font-size: 50px; margin-right: 20px; }
+        #text-area { font-family: 'Gaegu'; font-size: 24px; line-height: 1.4; flex: 1; }
+        #speed-readout { font-size: 18px; color: #ffeb3b; margin-top: 5px; font-weight: bold; }
+
+        #controls {
+            position: absolute; top: 20px; right: 20px; pointer-events: auto; display: flex; flex-direction: column; gap: 10px;
+        }
+        .ctrl-btn {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.5); color: white;
+            padding: 12px 25px; border-radius: 30px; cursor: pointer; font-family: 'Gaegu'; font-size: 20px;
+            transition: all 0.3s; text-align: left;
+        }
+        .ctrl-btn:hover, .ctrl-btn.active { background: #ffca28; color: black; box-shadow: 0 0 15px #ffca28; font-weight: bold; }
+
+        #mode-label {
+            position: absolute; top: 20px; left: 20px; font-family: 'Gaegu'; font-size: 40px; 
+            color: rgba(255,255,255,0.8); text-shadow: 0 0 10px #2196f3;
+        }
+
+        /* --- [화면 2] 관찰 일지 (리포트 & 퀴즈) - 수정된 부분 --- */
+        #report-screen {
+            display: none; 
+            position: fixed; /* 화면에 고정 */
+            top: 0; left: 0; 
+            width: 100%; height: 100vh; /* 전체 화면 차지 */
+            background: #eee; 
+            z-index: 100; /* 맨 위로 올림 */
+            color: #333; 
+            overflow-y: auto; /* ★ 세로 스크롤 허용 (핵심) */
+            justify-content: center; /* 가로 중앙 정렬 */
+            padding-top: 40px;
+            padding-bottom: 40px;
+        }
+        
+        #journal-paper {
+            width: 210mm; /* A4 폭 */
+            max-width: 90%; /* 모바일 대응 */
+            background: #fff; 
+            padding: 50px; 
+            box-sizing: border-box;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+            margin: 0 auto; /* 중앙 정렬 */
+            margin-bottom: 50px; /* 아래쪽 여백 확보 */
+            position: relative;
+        }
+
+        h1.title { font-family: 'Gaegu'; font-size: 40px; text-align: center; color: #1a237e; border-bottom: 3px double #1a237e; padding-bottom: 15px; margin-bottom: 30px; }
+        .section { margin-bottom: 30px; }
+        .label { font-size: 20px; font-weight: bold; color: #3949ab; display: block; margin-bottom: 10px; font-family: 'Gaegu'; border-left: 5px solid #ffca28; padding-left: 10px;}
+        
+        #captured-universe { width: 100%; height: auto; max-height: 400px; background: #000; object-fit: contain; border: 2px solid #333; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto; }
+        
+        /* 퀴즈 스타일 */
+        .quiz-box { background: #e3f2fd; padding: 20px; border-radius: 15px; border: 2px dashed #2196f3; }
+        .quiz-question { font-size: 18px; margin-bottom: 10px; font-weight: bold; }
+        .quiz-options { display: flex; gap: 10px; flex-wrap: wrap; }
+        .quiz-btn { padding: 10px 20px; border: 1px solid #aaa; background: white; cursor: pointer; border-radius: 10px; font-family: 'Gaegu'; font-size: 18px; flex: 1; min-width: 100px; }
+        .quiz-btn:hover { background: #bbdefb; }
+        .quiz-result { margin-top: 10px; font-weight: bold; color: #d81b60; font-size: 20px; display: none; }
+
+        #auto-text { background: #f9fbe7; padding: 15px; border-radius: 10px; font-family: 'Gaegu'; font-size: 20px; line-height: 1.6; }
+
+        .btn-group { text-align: center; margin-top: 30px; padding-bottom: 20px; }
+
+        @media print {
+            body { background: white; -webkit-print-color-adjust: exact; overflow: visible; }
+            #space-container, .btn-group, .quiz-options { display: none !important; }
+            #report-screen { display: block !important; position: static; padding: 0; height: auto; overflow: visible; }
+            #journal-paper { box-shadow: none; width: 100%; margin: 0; padding: 0; }
+            .quiz-box { border: 1px solid #ccc; }
+            .quiz-result { display: block !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="space-container">
+        <div id="mode-label">관찰 준비 중...</div>
+        
+        <script>
+            for(let i=0; i<80; i++) {
+                let star = document.createElement('div');
+                star.className = 'star';
+                star.style.width = Math.random()*3 + 'px';
+                star.style.height = star.style.width;
+                star.style.left = Math.random()*100 + 'vw';
+                star.style.top = Math.random()*100 + 'vh';
+                star.style.animationDuration = (Math.random()*3 + 1) + 's';
+                document.getElementById('space-container').appendChild(star);
+            }
+        </script>
+
+        <canvas id="spaceCanvas"></canvas>
+
+        <div id="ui-layer">
+            <div id="controls">
+                <button class="ctrl-btn" onclick="setMode('rotation')" id="btn-rot">🌪️ 자전 연주 (하루)</button>
+                <button class="ctrl-btn" onclick="setMode('revolution')" id="btn-rev">💫 공전 연주 (1년)</button>
+                <button class="ctrl-btn" style="margin-top:20px; background:#4caf50;" onclick="finishObservation()">📝 관찰 일지 쓰기</button>
+            </div>
+
+            <div id="dialogue-box">
+                <div id="char-img">🧙‍♂️</div>
+                <div id="text-area">
+                    <span id="main-text">안녕? 난 무니야. 버튼을 눌러 행성의 움직임을 관찰해 봐.</span>
+                    <div id="speed-readout"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="report-screen">
+        <div id="journal-paper">
+            <h1 class="title">🪐 우주 탐험 일지</h1>
+            
+            <div class="section" style="display: flex; justify-content: space-between;">
+                <div style="font-family:'Gaegu'; font-size:24px;">탐험대원: <span contenteditable="true" style="border-bottom:1px solid #333; min-width:100px; display:inline-block;">________</span></div>
+                <div style="font-family:'Gaegu'; font-size:24px;" id="date-now"></div>
+            </div>
+
+            <div class="section">
+                <span class="label">1. 관찰 사진 (자전과 공전)</span>
+                <img id="captured-universe" src="">
+            </div>
+
+            <div class="section">
+                <span class="label">2. 무니의 관찰 분석 (자동 기록)</span>
+                <div id="auto-text">
+                    데이터 분석 중...
+                </div>
+            </div>
+
+            <div class="section">
+                <span class="label">3. 스피드 퀴즈! (정답을 눌러보세요)</span>
+                <div class="quiz-box">
+                    <div class="quiz-question">Q. 태양 주위를 가장 빨리 한 바퀴 도는(공전) 행성은?</div>
+                    <div class="quiz-options">
+                        <button class="quiz-btn" onclick="checkQuiz(this, false)">목성 (느림보)</button>
+                        <button class="quiz-btn" onclick="checkQuiz(this, true)">수성 (달리기왕)</button>
+                        <button class="quiz-btn" onclick="checkQuiz(this, false)">해왕성 (거북이)</button>
+                    </div>
+                    <div class="quiz-result" id="quiz-res-1"></div>
+                </div>
+                <br>
+                <div class="quiz-box">
+                    <div class="quiz-question">Q. '자전'과 '공전'의 차이는 무엇일까요?</div>
+                    <div class="quiz-options">
+                        <button class="quiz-btn" onclick="checkQuiz2(this, true)">자전은 제자리 돌기, 공전은 태양 돌기</button>
+                        <button class="quiz-btn" onclick="checkQuiz2(this, false)">자전은 태양 돌기, 공전은 제자리 돌기</button>
+                    </div>
+                    <div class="quiz-result" id="quiz-res-2"></div>
+                </div>
+            </div>
+
+            <div class="section" style="text-align: right; margin-top: 50px;">
+                <p style="font-family: 'Gaegu'; font-size: 22px; color: #1a237e;">
+                    "우주의 모든 별들은 각자의 속도로 춤추고 있단다."<br>- 지도 교사 무니 -
+                </p>
+            </div>
+            
+            <div class="btn-group">
+                <button class="ctrl-btn" style="background:#1a237e; color:white; display:inline-block;" onclick="window.print()">🖨️ 인쇄 / 저장</button>
+                <button class="ctrl-btn" style="background:#f57c00; color:white; display:inline-block;" onclick="location.reload()">🔄 다시 하기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('spaceCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, centerX, centerY;
+        
+        const planets = [
+            { name: "수성", r: 70, revSpeed: 0.04, rotSpeed: 0.1, color: "#bdbdbd", size: 6, desc: "전력질주!" },
+            { name: "금성", r: 100, revSpeed: 0.025, rotSpeed: -0.01, color: "#ffcc80", size: 9, desc: "반대로 천천히 자전해요" },
+            { name: "지구", r: 140, revSpeed: 0.02, rotSpeed: 0.2, color: "#4fc3f7", size: 9, desc: "생명의 행성" },
+            { name: "화성", r: 180, revSpeed: 0.015, rotSpeed: 0.18, color: "#ff7043", size: 7, desc: "붉은 사막" },
+            { name: "목성", r: 250, revSpeed: 0.008, rotSpeed: 0.4, color: "#dce775", size: 18, desc: "자전이 엄청 빨라요!" },
+            { name: "토성", r: 310, revSpeed: 0.006, rotSpeed: 0.38, color: "#ffe082", size: 15, desc: "고리가 예뻐요" },
+            { name: "천왕성", r: 360, revSpeed: 0.004, rotSpeed: 0.2, color: "#80deea", size: 11, desc: "누워서 돌아요" },
+            { name: "해왕성", r: 410, revSpeed: 0.003, rotSpeed: 0.22, color: "#5c6bc0", size: 11, desc: "너무 추워요" }
+        ];
+
+        let currentMode = "ready";
+        let time = 0;
+
+        function init() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            centerX = width / 2;
+            centerY = height / 2;
+        }
+        window.addEventListener('resize', init);
+        init();
+
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+
+            ctx.shadowBlur = 50; ctx.shadowColor = "#ffeb3b"; ctx.fillStyle = "#ffeb3b";
+            ctx.beginPath(); ctx.arc(centerX, centerY, 30, 0, Math.PI * 2); ctx.fill();
+            ctx.shadowBlur = 0;
+
+            updateStatusText();
+
+            planets.forEach((p, index) => {
+                let angle = 0;
+                if (currentMode === 'revolution') {
+                    angle = time * p.revSpeed;
+                } else {
+                    angle = index * 0.8;
+                }
+
+                let x = centerX + Math.cos(angle) * p.r;
+                let y = centerY + Math.sin(angle) * p.r;
+
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+                ctx.beginPath(); ctx.arc(centerX, centerY, p.r, 0, Math.PI * 2); ctx.stroke();
+
+                ctx.save();
+                ctx.translate(x, y);
+                
+                if (currentMode === 'rotation') {
+                    let spin = time * p.rotSpeed * 5;
+                    ctx.rotate(spin);
+                } else {
+                    ctx.rotate(angle);
+                }
+
+                ctx.shadowBlur = 10; ctx.shadowColor = p.color; ctx.fillStyle = p.color;
+                ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI * 2); ctx.fill();
+                
+                ctx.fillStyle = "rgba(0,0,0,0.3)";
+                ctx.beginPath(); ctx.arc(p.size/2, 0, p.size/3, 0, Math.PI*2); ctx.fill(); 
+                ctx.fillRect(-p.size, -2, p.size*2, 4); 
+                
+                ctx.restore();
+
+                ctx.fillStyle = "white"; ctx.font = "14px Noto Serif KR";
+                ctx.fillText(p.name, x - 10, y + p.size + 15);
+            });
+
+            if (currentMode !== 'ready') time++;
+            requestAnimationFrame(draw);
+        }
+        draw();
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.ctrl-btn').forEach(b => b.classList.remove('active'));
+            const label = document.getElementById('mode-label');
+            const mainText = document.getElementById('main-text');
+
+            if(mode === 'rotation') {
+                document.getElementById('btn-rot').classList.add('active');
+                label.innerText = "🌪️ 자전: 제자리에서 팽이처럼 돌아요";
+                label.style.color = "#ff4081";
+                mainText.innerHTML = "자전은 <strong>낮과 밤</strong>을 만들어요.<br>목성(Jupiter)이 얼마나 빨리 도는지 보세요!";
+            } else if (mode === 'revolution') {
+                document.getElementById('btn-rev').classList.add('active');
+                label.innerText = "💫 공전: 태양 주위를 크게 돌아요";
+                label.style.color = "#2196f3";
+                mainText.innerHTML = "공전은 <strong>봄 여름 가을 겨울</strong>을 만들어요.<br>수성이 태양 주위를 쌩쌩 달리고 있어요!";
+            }
+        }
+
+        function updateStatusText() {
+            const readout = document.getElementById('speed-readout');
+            if (currentMode === 'revolution') {
+                let fastPlanet = planets[0];
+                let slowPlanet = planets[7];
+                readout.innerHTML = `💨 ${fastPlanet.name}: ${fastPlanet.desc} (88일) <br> 🐢 ${slowPlanet.name}: ${slowPlanet.desc} (165년)`;
+            } else if (currentMode === 'rotation') {
+                readout.innerHTML = `⚡ 목성: 1바퀴 도는데 10시간밖에 안 걸려요!<br>🐢 금성: 너무 느려서 하루가 1년보다 길어요.`;
+            } else {
+                readout.innerHTML = "";
+            }
+        }
+
+        function finishObservation() {
+            document.getElementById('space-container').style.display = 'none';
+            document.getElementById('report-screen').style.display = 'flex'; // flex로 설정하여 중앙 정렬 유지
+            
+            const d = new Date();
+            document.getElementById('date-now').innerText = `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일`;
+            
+            document.getElementById('captured-universe').src = canvas.toDataURL('image/png');
+
+            const text = `
+                오늘 우리는 태양계의 움직임을 관찰했습니다.<br>
+                <br>
+                1. <strong>[자전 관찰]</strong> 목성은 팽이처럼 아주 빠르게 돌았고, 금성은 아주 천천히 반대로 돌았습니다.<br>
+                2. <strong>[공전 관찰]</strong> 태양에 가까운 수성은 바쁘게 달렸지만, 멀리 있는 해왕성은 아주 느긋하게 움직였습니다.<br>
+                <br>
+                이처럼 행성들은 저마다 다른 속도로 우주의 질서를 지키고 있었습니다.
+            `;
+            document.getElementById('auto-text').innerHTML = text;
+        }
+
+        function checkQuiz(btn, isCorrect) {
+            const res = document.getElementById('quiz-res-1');
+            if(isCorrect) {
+                res.innerHTML = "⭕ 정답입니다! 수성은 태양과 가까워서 제일 빨라요!";
+                btn.style.background = "#a5d6a7";
+            } else {
+                res.innerHTML = "❌ 땡! 다시 생각해볼까요? 태양과 가까울수록 빨라요.";
+                btn.style.background = "#ef9a9a";
+            }
+            res.style.display = "block";
+        }
+
+        function checkQuiz2(btn, isCorrect) {
+            const res = document.getElementById('quiz-res-2');
+            if(isCorrect) {
+                res.innerHTML = "⭕ 딩동댕! 자전=하루, 공전=1년 입니다.";
+                btn.style.background = "#a5d6a7";
+            } else {
+                res.innerHTML = "❌ 땡! 팽이처럼 제자리 도는 게 '자전'이에요.";
+                btn.style.background = "#ef9a9a";
+            }
+            res.style.display = "block";
+        }
+    </script>
+</body>
+</html>

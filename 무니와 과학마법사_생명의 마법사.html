@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>무니와 과학 마법사 - 식물 생존 일지(최종)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&family=Gaegu&display=swap');
+
+        /* --- [화면 1] 게임 플레이 화면 스타일 --- */
+        body { margin: 0; font-family: 'Noto Serif KR', serif; }
+        #game-screen { display: flex; justify-content: center; align-items: center; height: 100vh; background: linear-gradient(to bottom, #2c3e50, #4ca1af); position: relative; overflow: hidden; color: white; }
+        #game-container { width: 100%; max-width: 500px; height: 100vh; position: relative; }
+        /* 캔버스 높이를 키워서 나무를 더 시원하게 보여줌 */
+        canvas { position: absolute; bottom: 0; left: 0; width: 100%; height: 85%; z-index: 1; }
+
+        /* UI 요소들 */
+        #ui-layer { position: absolute; top: 20px; left: 20px; right: 20px; z-index: 10; }
+        #char-box { display: flex; align-items: flex-end; margin-bottom: 10px; }
+        #char-img { width: 80px; height: 80px; border-radius: 50%; background: #fff; border: 3px solid #ffd700; display: flex; justify-content: center; align-items: center; font-size: 40px; margin-right: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        #message-box { background: rgba(255, 255, 255, 0.95); color: #333; padding: 20px; border-radius: 25px; border-bottom-left-radius: 5px; font-size: 17px; line-height: 1.6; flex: 1; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        #choice-container { position: absolute; bottom: 30px; left: 20px; right: 20px; display: flex; flex-direction: column; gap: 12px; z-index: 20; }
+        .choice-btn { background: rgba(0, 0, 0, 0.7); color: #fff; border: 2px solid #81d4fa; padding: 18px; border-radius: 15px; font-size: 16px; cursor: pointer; text-align: left; font-family: 'Noto Serif KR', serif; transition: all 0.2s; }
+        .choice-btn:hover { background: #81d4fa; color: #000; transform: scale(1.02); }
+        
+        /* --- [화면 2] 결과 보고서 (생존 일지) 스타일 --- */
+        #report-screen { display: none; width: 100%; min-height: 100vh; background-color: #e0e0e0; padding: 40px 0; justify-content: center; }
+        #journal-paper { width: 210mm; min-height: 297mm; background: #fffaf0; /* 미색 종이 */ padding: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); box-sizing: border-box; position: relative; border-radius: 5px; }
+        #journal-paper::before { content: ''; position: absolute; top:0; left:0; width:100%; height:100%; background: url('https://www.transparenttextures.com/patterns/paper.png'); opacity: 0.5; pointer-events: none; } /* 종이 질감 */
+        
+        h1.journal-title { text-align: center; font-family: 'Gaegu', cursive; font-size: 45px; color: #2e7d32; margin-bottom: 40px; text-shadow: 2px 2px 0px #a5d6a7; }
+        .journal-section { margin-bottom: 35px; }
+        .journal-label { font-weight: bold; color: #388e3c; font-size: 22px; margin-bottom: 15px; display: block; border-bottom: 2px solid #a5d6a7; padding-bottom: 5px; font-family: 'Gaegu', cursive; }
+        /* 최종 이미지 스타일 */
+        #final-plant-img { width: 80%; height: auto; max-height: 400px; border: 8px solid #fff; outline: 1px solid #ddd; background: linear-gradient(to bottom, #e3f2fd, #fff); object-fit: contain; display: block; margin: 20px auto; box-shadow: 5px 5px 15px rgba(0,0,0,0.1); transform: rotate(-2deg); }
+        #story-text { font-size: 20px; line-height: 2.2; font-family: 'Gaegu', cursive; white-space: pre-wrap; color: #444; background: rgba(255,255,255,0.6); padding: 20px; border-radius: 10px; }
+        .btn-group { margin-top: 30px; text-align: center; }
+        .action-btn { padding: 15px 35px; font-size: 22px; border: none; border-radius: 50px; cursor: pointer; margin: 0 10px; font-weight: bold; font-family: 'Gaegu', cursive; box-shadow: 0 5px 0 rgba(0,0,0,0.2); transition: transform 0.1s; }
+        .action-btn:active { transform: translateY(5px); box-shadow: none; }
+        .print-btn { background: #2e7d32; color: white; } .restart-btn { background: #ff9800; color: white; }
+
+        /* 인쇄 설정 */
+        @media print {
+            body { background: white; -webkit-print-color-adjust: exact; }
+            #game-screen { display: none !important; }
+            #report-screen { display: flex !important; padding: 0; background: white; }
+            #journal-paper { box-shadow: none; margin: 0; width: 100%; height: auto; border-radius: 0; }
+            .btn-group { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-screen">
+        <div id="game-container">
+            <canvas id="plantCanvas"></canvas>
+            <div id="ui-layer">
+                <div id="char-box">
+                    <div id="char-img">🧙‍♂️</div>
+                    <div id="message-box">안녕? 난 숲의 안내자 무니야. <br>지금부터 식물이 되어 치열한 생존을 시작해 볼까?</div>
+                </div>
+            </div>
+            <div id="choice-container">
+                <button class="choice-btn" onclick="startGame()">🌱 씨앗 심기 (시작)</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="report-screen">
+        <div id="journal-paper">
+            <h1 class="journal-title">🌿 나의 식물 생존 일지</h1>
+            <div class="journal-section" style="display: flex; justify-content: space-between; font-family: 'Gaegu'; font-size: 24px;">
+                <div>이름: <span id="student-name" style="border-bottom: 2px dotted #333;">________</span></div>
+                <div>날짜: <span id="date-now"></span></div>
+            </div>
+            <div class="journal-section">
+                <span class="journal-label">나의 식물 사진</span>
+                <img id="final-plant-img" src="" alt="식물 완성 모습">
+            </div>
+            <div class="journal-section">
+                <span class="journal-label">성장 이야기</span>
+                <div id="story-text">이야기 로딩중...</div>
+            </div>
+            <div class="journal-section" style="margin-top: 60px; text-align: right;">
+                <p style="font-family: 'Gaegu'; font-size: 24px; color: #2e7d32;">지도 교사: 무니 선생님 (인)</p>
+            </div>
+        </div>
+        <div class="btn-group">
+            <button class="action-btn restart-btn" onclick="location.reload()">🔄 처음으로</button>
+            <button class="action-btn print-btn" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. 기본 설정 및 변수 ---
+        const canvas = document.getElementById('plantCanvas');
+        const ctx = canvas.getContext('2d');
+        const messageBox = document.getElementById('message-box');
+        const choiceContainer = document.getElementById('choice-container');
+        const charImg = document.getElementById('char-img');
+        
+        canvas.width = 500; canvas.height = 800; // 캔버스 크기 확대
+        const cx = canvas.width / 2;
+        const cy = canvas.height - 80;
+
+        let step = 0;
+        let treeState = "seed";
+        let storyLog = [];
+
+        // --- 2. 시나리오 데이터 (이전과 동일) ---
+        const scenarios = [
+            { char: "무진", emoji: "🌿", text: "햇빛이 부족해! 주변 나무들이 너무 커.", choices: [{ text: "A. 무조건 위로 빨리 자란다.", action: "die_tall", result: "무리하다가 줄기가 꺾였어...", story: "햇빛을 보려 욕심내다 줄기가 부러지는 아픔을 겪었습니다." }, { text: "B. 빛이 있는 옆쪽으로 휜다.", action: "bend", result: "현명해! 몸을 굽혀 빛을 찾았어.", story: "유연하게 몸을 굽혀 빛을 찾는 지혜를 발휘했습니다." }] },
+            { char: "무토", emoji: "💧", text: "가뭄이야! 흙이 말랐어.", choices: [{ text: "A. 잎을 떨어뜨려 수분을 지킨다.", action: "leafless", result: "과감한 결단으로 살아남았어!", story: "가뭄 속에서 소중한 잎을 버리는 결단으로 생명을 지켰습니다." }, { text: "B. 뿌리를 더 깊게 내린다.", action: "die_dry", result: "땅속 깊은 곳도 말라있었어...", story: "뿌리를 깊이 내려보았지만 물을 찾지 못해 시들고 말았습니다." }] },
+            { char: "무지", emoji: "🎨", text: "꽃을 피울 시간! 벌을 불러야 해.", choices: [{ text: "A. 에너지를 쏟아 화려하게 피운다.", action: "flower", result: "와! 벌들이 몰려와 열매를 맺었어!", story: "마지막 힘을 다해 가장 아름다운 꽃을 피워 결실을 맺었습니다." }, { text: "B. 에너지를 아껴 작게 피운다.", action: "die_small", result: "꽃이 너무 작아 벌들이 못 봤어...", story: "힘을 아끼려 꽃을 작게 피웠더니 아무도 찾아오지 않았습니다." }] }
+        ];
+
+        // --- 3. 게임 로직 함수들 ---
+        function startGame() { step = 0; storyLog = []; treeState = "normal"; loadScenario(0); }
+        function loadScenario(index) {
+            const data = scenarios[index]; charImg.innerText = data.emoji; messageBox.innerHTML = `<strong>${data.char}:</strong><br>${data.text}`;
+            choiceContainer.innerHTML = "";
+            data.choices.forEach((choice, i) => {
+                const btn = document.createElement("button"); btn.className = "choice-btn"; btn.innerText = choice.text; btn.onclick = () => makeChoice(index, i); choiceContainer.appendChild(btn);
+            });
+            drawPlant(treeState);
+        }
+        function makeChoice(scenarioIdx, choiceIdx) {
+            const data = scenarios[scenarioIdx]; const choice = data.choices[choiceIdx];
+            updateGameState(choice.action); storyLog.push(choice.story);
+            messageBox.innerHTML = choice.result; choiceContainer.innerHTML = "";
+            if (choice.result.includes("!", "현명해")) { // 성공 키워드 체크
+                setTimeout(() => { (scenarioIdx < scenarios.length - 1) ? loadScenario(scenarioIdx + 1) : askNameAndFinish(); }, 2000);
+            } else {
+                 setTimeout(() => { storyLog.push("나의 도전은 멈췄지만, 다음엔 더 지혜롭게 자랄 것입니다."); askNameAndFinish(); }, 2000);
+            }
+        }
+        function updateGameState(action) {
+            if(action === "bend") treeState = "bent"; if(action === "leafless") treeState = "leafless";
+            if(action === "flower") treeState = "flower"; if(action.includes("die")) treeState = "dead";
+            drawPlant(treeState);
+        }
+        function askNameAndFinish() {
+            charImg.innerText = "🧙‍♂️"; messageBox.innerHTML = "모험이 끝났어. <br>이 식물에게 멋진 이름을 지어줄래?";
+            const input = document.createElement("input"); input.type = "text"; input.placeholder = "예: 지혜로운 떡갈나무"; input.style = "padding:15px; width:70%; margin-top:15px; font-size:18px; border-radius:10px; border:2px solid #81d4fa; font-family: 'Gaegu';";
+            const btn = document.createElement("button"); btn.className = "choice-btn"; btn.innerText = "✨ 일지 완성하기 ✨"; btn.style = "margin-top:15px; background:#4ca1af; text-align:center; width: 80%;"; btn.onclick = () => showReport(input.value);
+            choiceContainer.innerHTML = ""; choiceContainer.appendChild(input); choiceContainer.appendChild(btn);
+        }
+        function showReport(name) {
+            document.getElementById('game-screen').style.display = 'none'; document.getElementById('report-screen').style.display = 'flex';
+            document.getElementById('student-name').innerText = name || "이름 없는 식물";
+            const date = new Date(); document.getElementById('date-now').innerText = `${date.getFullYear()}년 ${date.getMonth()+1}월 ${date.getDate()}일`;
+            document.getElementById('story-text').innerText = `나는 거친 숲속에서 태어났습니다.\n\n` + storyLog.join("\n\n") + (treeState === "flower" ? `\n\n그 결과, 온갖 시련을 이겨내고 나만의 아름다운 꽃을 피워냈습니다.` : "");
+            document.getElementById('final-plant-img').src = canvas.toDataURL('image/png');
+        }
+
+        // --- 4. [핵심 업그레이드] 예쁜 그림 그리기 함수들 ---
+        drawPlant("seed"); // 초기 화면
+
+        function drawPlant(state) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 흙 (그라데이션)
+            const groundGrad = ctx.createLinearGradient(0, cy, 0, canvas.height);
+            groundGrad.addColorStop(0, "#795548"); groundGrad.addColorStop(1, "#4e342e");
+            ctx.fillStyle = groundGrad; ctx.fillRect(0, cy, canvas.width, canvas.height - cy);
+
+            if (state === "seed") {
+                ctx.fillStyle = "#a5d6a7"; ctx.beginPath(); ctx.arc(cx, cy+30, 12, 0, Math.PI*2); ctx.fill(); return;
+            }
+
+            // 나무 그리기 스타일 설정
+            ctx.lineCap = "round"; ctx.lineJoin = "round";
+            const trunkColor = (state === "dead") ? ["#5d4037", "#3e2723"] : ["#8d6e63", "#6d4c41"]; // [밝은색, 어두운색]
+            const leafType = (state === "dead") ? "brown" : (state === "leafless" ? "none" : "lush");
+
+            ctx.beginPath();
+            if (state === "die_tall") { // 쓰러진 나무
+                drawPrettyTrunk(cx, cy, cx+150, cy-350, 15, 5, trunkColor, true);
+                drawPrettyLeaves(cx+150, cy-350, "brown", "sparse");
+            } else if (state === "bend" || state === "leafless" || state === "flower") { // 휜 나무 (성공 루트)
+                // 베지어 곡선으로 자연스럽게 휘게 그림
+                drawCurveTrunk(cx, cy, cx-80, cy-200, cx+80, cy-500, 20, 8, trunkColor);
+                if(leafType !== "none") drawPrettyLeaves(cx+80, cy-500, leafType, "full");
+                if(state === "flower") drawPrettyFlowers(cx+80, cy-500);
+            } else if (state === "normal") { // 일반 성장
+                drawPrettyTrunk(cx, cy, cx, cy-250, 18, 10, trunkColor);
+                drawPrettyLeaves(cx, cy-250, leafType, "medium");
+            } else if (state === "dead") { // 말라 죽음
+                 drawCurveTrunk(cx, cy, cx-80, cy-200, cx+80, cy-500, 20, 8, trunkColor);
+                 drawPrettyLeaves(cx+80, cy-500, "brown", "sparse");
+            }
+        }
+
+        // [New] 예쁜 줄기 그리기 (직선형 - 점점 가늘어짐 + 명암)
+        function drawPrettyTrunk(x1, y1, x2, y2, w1, w2, colors, broken=false) {
+            const grad = ctx.createLinearGradient(x1, y1, x2, y2);
+            grad.addColorStop(0, colors[0]); grad.addColorStop(1, colors[1]);
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = w1; ctx.beginPath(); ctx.moveTo(x1, y1); 
+            if(broken) { ctx.lineTo(x1, y1-200); ctx.lineTo(x2, y2); } // 꺾임 표현
+            else { ctx.lineTo(x2, y2); }
+            ctx.stroke();
+            // 질감 선 추가
+            ctx.strokeStyle = colors[1]; ctx.lineWidth = 2; ctx.beginPath();
+            ctx.moveTo(x1-w1/3, y1); ctx.lineTo(x2-w2/3, y2); ctx.stroke();
+        }
+
+        // [New] 예쁜 줄기 그리기 (곡선형)
+        function drawCurveTrunk(x1, y1, cp1x, cp1y, x2, y2, w1, w2, colors) {
+            const grad = ctx.createLinearGradient(x1, y1, x2, y2);
+            grad.addColorStop(0, colors[0]); grad.addColorStop(1, colors[1]);
+            ctx.strokeStyle = grad;
+            // 굵은 줄기
+            ctx.lineWidth = w1; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.quadraticCurveTo(cp1x, cp1y, x2, y2); ctx.stroke();
+            // 중간 굵기 줄기 (명암용)
+            ctx.strokeStyle = colors[0]; ctx.lineWidth = w1*0.6; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.quadraticCurveTo(cp1x+10, cp1y+10, x2, y2); ctx.stroke();
+        }
+
+        // [New] 예쁜 잎사귀 그리기 (여러 개의 타원형 잎을 뭉쳐서 표현)
+        function drawPrettyLeaves(x, y, type, density) {
+            if(type === "none") return;
+            const colors = (type === "brown") ? ["#a1887f", "#8d6e63", "#6d4c41"] : ["#66bb6a", "#43a047", "#81c784", "#a5d6a7"];
+            const count = (density === "full") ? 40 : (density === "medium" ? 25 : 15);
+            const spread = (density === "full") ? 70 : 50;
+
+            for(let i=0; i<count; i++) {
+                ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+                ctx.beginPath();
+                const lx = x + (Math.random()-0.5) * spread * 2;
+                const ly = y + (Math.random()-0.5) * spread * 1.5;
+                const radiusX = Math.random() * 15 + 10;
+                const radiusY = Math.random() * 8 + 5;
+                const rotation = Math.random() * Math.PI;
+                ctx.ellipse(lx, ly, radiusX, radiusY, rotation, 0, Math.PI*2);
+                ctx.fill();
+            }
+        }
+
+        // [New] 예쁜 꽃 그리기 (꽃잎 5개 디테일)
+        function drawPrettyFlowers(x, y) {
+            for(let k=0; k<12; k++) { // 꽃 12송이
+                const fx = x + (Math.random()-0.5) * 100;
+                const fy = y + (Math.random()-0.5) * 80;
+                // 꽃잎
+                ctx.fillStyle = "#f06292"; // 핑크색
+                for(let i=0; i<5; i++) {
+                    const angle = (Math.PI*2 / 5) * i;
+                    ctx.beginPath();
+                    ctx.ellipse(fx + Math.cos(angle)*8, fy + Math.sin(angle)*8, 8, 4, angle, 0, Math.PI*2);
+                    ctx.fill();
+                }
+                // 꽃술
+                ctx.fillStyle = "#ffd54f"; // 노란색
+                ctx.beginPath(); ctx.arc(fx, fy, 5, 0, Math.PI*2); ctx.fill();
+            }
+        }
+    </script>
+</body>
+</html>

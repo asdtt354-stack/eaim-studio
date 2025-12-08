@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>무니와 과학 마법사 - 소리의 비밀 (리포트 포함)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Jua&family=Noto+Serif+KR:wght@400;700&family=Gaegu&display=swap');
+
+        body {
+            margin: 0;
+            background-color: #111;
+            color: white;
+            font-family: 'Jua', sans-serif;
+            overflow-x: hidden; /* 가로 스크롤 방지 */
+        }
+
+        /* --- [화면 1] 게임 플레이 화면 --- */
+        #game-screen {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle, #2b1055, #000);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        canvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+        }
+
+        /* 진행 상태 표시바 */
+        #progress-bar {
+            width: 0%; height: 10px; background: #ff4081; position: absolute; top: 0; left: 0; z-index: 100; transition: width 0.5s;
+        }
+
+        /* 대화창 UI */
+        #dialogue-box {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            width: 80%; max-width: 800px; height: 150px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px; border: 5px solid #ffca28;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 10;
+            display: none; align-items: center; padding: 20px; color: #333;
+        }
+        #char-portrait { width: 100px; height: 100px; border-radius: 50%; background-color: #fff; margin-right: 20px; border: 3px solid #ffca28; display: flex; justify-content: center; align-items: center; font-size: 50px; flex-shrink: 0; }
+        #text-content { flex-grow: 1; }
+        #char-name { font-size: 24px; color: #d81b60; margin-bottom: 10px; font-weight: bold; }
+        #dialogue-text { font-size: 22px; line-height: 1.5; }
+
+        /* 시작 화면 */
+        #start-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 20;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+        }
+        #start-btn {
+            padding: 20px 50px; font-size: 30px; font-family: 'Jua', sans-serif;
+            background: linear-gradient(45deg, #ff4081, #ffca28); color: white; border: none; border-radius: 50px;
+            cursor: pointer; box-shadow: 0 0 20px rgba(255, 64, 129, 0.6); animation: bounce 2s infinite;
+        }
+
+        /* --- [화면 2] 글쓰기 화면 (Writing Screen) --- */
+        #writing-screen {
+            display: none; /* 게임 끝나면 보임 */
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8); z-index: 50;
+            justify-content: center; align-items: center; flex-direction: column;
+        }
+        .writing-card {
+            background: white; color: #333; width: 90%; max-width: 600px; padding: 30px; border-radius: 20px;
+            box-shadow: 0 0 30px rgba(255, 202, 40, 0.5); text-align: center;
+        }
+        .writing-card h2 { color: #d81b60; margin-top: 0; }
+        .question-group { margin-bottom: 20px; text-align: left; }
+        .question-label { display: block; font-size: 18px; margin-bottom: 8px; color: #555; font-weight: bold; }
+        .input-area {
+            width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 10px; font-family: 'Gaegu'; font-size: 20px;
+            box-sizing: border-box; background: #f9f9f9;
+        }
+        .finish-btn {
+            background: #2e7d32; color: white; border: none; padding: 15px 40px; font-size: 22px; border-radius: 50px;
+            cursor: pointer; font-family: 'Jua'; margin-top: 10px;
+        }
+
+        /* --- [화면 3] 최종 리포트 (Report Screen - 인쇄용) --- */
+        #report-screen {
+            display: none; width: 100%; min-height: 100vh; background-color: #e0e0e0;
+            justify-content: center; padding: 40px 0; color: #333;
+        }
+        #journal-paper {
+            width: 210mm; min-height: 297mm; background: #fff; padding: 50px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); box-sizing: border-box; position: relative;
+        }
+        /* 종이 질감 */
+        #journal-paper::before {
+            content: ''; position: absolute; top:0; left:0; width:100%; height:100%;
+            background-image: linear-gradient(#f0f0f0 1px, transparent 1px); background-size: 100% 2em; opacity: 0.3; pointer-events: none;
+        }
+
+        h1.report-title { font-family: 'Gaegu'; font-size: 45px; color: #2b1055; text-align: center; border-bottom: 3px double #2b1055; padding-bottom: 10px; margin-bottom: 40px; }
+        .report-section { margin-bottom: 30px; }
+        .report-label { font-size: 20px; font-weight: bold; color: #d81b60; margin-bottom: 10px; display: block; border-left: 5px solid #ffca28; padding-left: 10px; font-family: 'Noto Serif KR'; }
+        
+        #captured-art {
+            width: 100%; height: 300px; background: #000; border: 5px solid #222; object-fit: cover; display: block; margin: 0 auto;
+        }
+        .answer-box {
+            font-family: 'Gaegu'; font-size: 24px; line-height: 1.8; color: #000; background: rgba(255, 202, 40, 0.1); padding: 15px; border-radius: 10px; min-height: 50px;
+        }
+
+        .btn-group { margin-top: 20px; text-align: center; }
+        .action-btn { padding: 15px 30px; font-size: 20px; border: none; border-radius: 50px; cursor: pointer; margin: 0 10px; font-family: 'Jua'; }
+        .print-btn { background: #2b1055; color: white; }
+        .restart-btn { background: #ff9800; color: white; }
+
+        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+
+        /* 인쇄 설정 */
+        @media print {
+            body { background: white; -webkit-print-color-adjust: exact; }
+            #game-screen, #writing-screen { display: none !important; }
+            #report-screen { display: flex !important; padding: 0; background: white; }
+            #journal-paper { box-shadow: none; margin: 0; width: 100%; border: none; }
+            .btn-group { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-screen">
+        <div id="progress-bar"></div>
+        <canvas id="visualizer"></canvas>
+
+        <div id="dialogue-box">
+            <div id="char-portrait">🧙‍♂️</div>
+            <div id="text-content">
+                <div id="char-name">무니</div>
+                <div id="dialogue-text">...</div>
+            </div>
+        </div>
+
+        <div id="start-overlay">
+            <h1 style="font-size: 50px; margin-bottom: 20px; color: #ffca28;">무니와 과학 마법사</h1>
+            <h2 style="color: white; margin-bottom: 50px;">EP1. 소리의 비밀</h2>
+            <button id="start-btn">탐험 시작하기 ▶</button>
+            <p style="color: #aaa; margin-top: 20px;">* 마이크 권한을 허용해주세요</p>
+        </div>
+    </div>
+
+    <div id="writing-screen">
+        <div class="writing-card">
+            <h2>✨ 소리 마법 탐험 성공!</h2>
+            <p>오늘 체험을 나만의 에세이로 남겨보세요.</p>
+            
+            <div class="question-group">
+                <label class="question-label">1. 내 목소리를 색깔로 표현한다면 무슨 색인가요?</label>
+                <input type="text" id="input-q1" class="input-area" placeholder="예: 씩씩한 빨간색, 부드러운 파란색...">
+            </div>
+            
+            <div class="question-group">
+                <label class="question-label">2. 오늘 만든 '큰 소리 에너지'를 누구에게 보내주고 싶나요?</label>
+                <textarea id="input-q2" class="input-area" rows="2" placeholder="예: 매일 일하느라 힘드신 아빠에게..."></textarea>
+            </div>
+
+            <div class="question-group">
+                <label class="question-label">3. 나의 이름(별명)</label>
+                <input type="text" id="input-name" class="input-area" placeholder="소리 마법사 000">
+            </div>
+
+            <button class="finish-btn" onclick="generateReport()">완성하고 리포트 보기</button>
+        </div>
+    </div>
+
+    <div id="report-screen">
+        <div id="journal-paper">
+            <h1 class="report-title">🎨 나의 소리 예술 리포트</h1>
+            
+            <div class="report-section" style="display:flex; justify-content:space-between; border-bottom: 2px solid #ddd; padding-bottom:10px;">
+                <div style="font-family:'Gaegu'; font-size:24px;">이름: <span id="report-name"></span></div>
+                <div style="font-family:'Gaegu'; font-size:24px;">날짜: <span id="report-date"></span></div>
+            </div>
+
+            <div class="report-section">
+                <span class="report-label">내가 만든 소리 파동 작품</span>
+                <p style="font-size:14px; color:#666; margin-bottom:5px;">* 나의 목소리 에너지가 만든 세상에 하나뿐인 그림입니다.</p>
+                <img id="captured-art" src="" alt="소리 예술 작품">
+            </div>
+
+            <div class="report-section">
+                <span class="report-label">Q1. 나의 목소리 색깔은?</span>
+                <div id="ans-q1" class="answer-box"></div>
+            </div>
+
+            <div class="report-section">
+                <span class="report-label">Q2. 에너지를 보내고 싶은 사람은?</span>
+                <div id="ans-q2" class="answer-box"></div>
+            </div>
+
+            <div class="report-section" style="margin-top:50px; text-align: center;">
+                <p style="font-family: 'Gaegu'; font-size: 20px; color: #2b1055;">
+                    "소리는 눈에 보이지 않지만, 세상을 움직이는 힘이 있단다."<br>
+                    - 무니 선생님 -
+                </p>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="action-btn restart-btn" onclick="location.reload()">🔄 다시 하기</button>
+            <button class="action-btn print-btn" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button>
+        </div>
+    </div>
+
+    <script>
+        // 시나리오 데이터
+        const scenario = [
+            { id: 1, name: "무니 (리더)", emoji: "🧙‍♂️", text: "안녕? 난 무니야. <br>여기는 소리가 그림이 되는 마법의 숲이야.", type: "click" },
+            { id: 2, name: "무토 (엔지니어)", emoji: "👷", text: "앗, 너무 어두워! <br>작은 소리로 '반짝'하고 속삭여줄래?", type: "sound_low", threshold: 10 },
+            { id: 3, name: "무지 (예술가)", emoji: "🎨", text: "와! 빛이 생겼어! <br>이번엔 아주 큰 소리로 '야호!' 하고 외쳐봐!", type: "sound_high", threshold: 50 },
+            { id: 4, name: "무지 (예술가)", emoji: "🌈", text: "대단해!! 네 목소리가 <br>화려한 무지개 파도가 되었어!", type: "auto" },
+            { id: 5, name: "무진 (시인)", emoji: "🌿", text: "참 아름답다... <br>이 아름다운 소리를 기록하러 가볼까?", type: "end" }
+        ];
+
+        // 변수 설정
+        let currentStep = 0;
+        let audioContext, analyser, dataArray;
+        let isListening = false;
+        const canvas = document.getElementById('visualizer');
+        const ctx = canvas.getContext('2d');
+        const dialogueBox = document.getElementById('dialogue-box');
+        
+        // 캔버스 크기
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // 시작 버튼
+        document.getElementById('start-btn').addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                const source = audioContext.createMediaStreamSource(stream);
+                source.connect(analyser);
+                analyser.fftSize = 256;
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+                document.getElementById('start-overlay').style.display = 'none';
+                dialogueBox.style.display = 'flex';
+                isListening = true;
+                drawVisualizer();
+                loadStep(0);
+            } catch (err) {
+                alert("마이크 권한이 필요합니다!");
+            }
+        });
+
+        // 대화창 클릭
+        dialogueBox.addEventListener('click', () => {
+            if (scenario[currentStep].type === 'click') nextStep();
+        });
+
+        function loadStep(index) {
+            if (index >= scenario.length) return;
+            currentStep = index;
+            const scene = scenario[index];
+            document.getElementById('char-name').innerText = scene.name;
+            document.getElementById('char-name').style.color = getCharColor(scene.name);
+            document.getElementById('dialogue-text').innerHTML = scene.text;
+            document.getElementById('char-portrait').innerText = scene.emoji;
+            document.getElementById('progress-bar').style.width = ((index + 1) / scenario.length) * 100 + "%";
+
+            if (scene.type === 'auto') setTimeout(nextStep, 3500);
+            if (scene.type === 'end') {
+                // 엔딩일 때 잠시 보여주고 글쓰기 화면으로 이동
+                setTimeout(() => {
+                    document.getElementById('game-screen').style.display = 'none'; // 게임 화면 숨김 (하지만 캔버스는 살아있음)
+                    document.getElementById('writing-screen').style.display = 'flex'; // 글쓰기 화면 등장
+                }, 3000);
+            }
+        }
+
+        function nextStep() {
+            if (currentStep < scenario.length - 1) loadStep(currentStep + 1);
+        }
+
+        function getCharColor(name) {
+            if (name.includes("무니")) return "#d81b60";
+            if (name.includes("무토")) return "#1e88e5";
+            if (name.includes("무지")) return "#ffca28";
+            if (name.includes("무진")) return "#43a047";
+            return "#333";
+        }
+
+        // [핵심] 리포트 생성 함수
+        function generateReport() {
+            // 1. 입력값 가져오기
+            const name = document.getElementById('input-name').value || "익명의 소리 마법사";
+            const q1 = document.getElementById('input-q1').value || "무지개색";
+            const q2 = document.getElementById('input-q2').value || "나 자신에게";
+            
+            // 2. 리포트에 넣기
+            document.getElementById('report-name').innerText = name;
+            const today = new Date();
+            document.getElementById('report-date').innerText = `${today.getFullYear()}년 ${today.getMonth()+1}월 ${today.getDate()}일`;
+            document.getElementById('ans-q1').innerText = q1;
+            document.getElementById('ans-q2').innerText = q2;
+
+            // 3. 캔버스 그림 캡처 (배경이 검은색이라 리포트에선 반전효과처럼 보임 -> 그대로 씀)
+            // *중요: 캔버스의 현재 상태를 이미지로 변환
+            const dataURL = canvas.toDataURL('image/png');
+            document.getElementById('captured-art').src = dataURL;
+
+            // 4. 화면 전환
+            document.getElementById('writing-screen').style.display = 'none';
+            document.getElementById('report-screen').style.display = 'flex';
+        }
+
+        // 시각화 루프
+        function drawVisualizer() {
+            if(!isListening) return;
+            requestAnimationFrame(drawVisualizer);
+            analyser.getByteFrequencyData(dataArray);
+
+            // 배경: 잔상 효과를 위해 투명도 있는 검은색 덮기
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            let sum = 0;
+            for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+            let averageVolume = sum / dataArray.length;
+
+            const barWidth = (canvas.width / dataArray.length) * 2.5;
+            let x = 0;
+            for (let i = 0; i < dataArray.length; i++) {
+                let barHeight = dataArray[i] * 1.5;
+                
+                // 캐릭터별 색상 테마 적용
+                let r, g, b;
+                if (scenario[currentStep] && scenario[currentStep].name.includes("무토")) { 
+                     r = 50; g = 50; b = barHeight + 100; // 파랑
+                } else if (scenario[currentStep] && scenario[currentStep].name.includes("무지")) { 
+                     r = barHeight + 50; g = x % 255; b = 50; // 알록달록
+                } else { 
+                     r = barHeight + 25 * (i / dataArray.length); g = 250 * (i / dataArray.length); b = 50; // 기본
+                }
+
+                ctx.fillStyle = `rgb(${r},${g},${b})`;
+                ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                x += barWidth + 1;
+            }
+
+            checkSoundMission(averageVolume);
+        }
+
+        function checkSoundMission(volume) {
+            const scene = scenario[currentStep];
+            if (scene.type === 'sound_low') {
+                if (volume > scene.threshold && volume < 40) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'; ctx.fillRect(0,0,canvas.width, canvas.height);
+                    if(!scene.cleared) { scene.cleared = true; setTimeout(nextStep, 1000); }
+                }
+            }
+            if (scene.type === 'sound_high') {
+                if (volume > scene.threshold) {
+                    // 성공 시 화려한 폭죽 효과
+                    ctx.fillStyle = `rgba(${Math.random()*255}, ${Math.random()*255}, ${Math.random()*255}, 0.5)`;
+                    ctx.fillRect(0,0,canvas.width, canvas.height);
+                    if(!scene.cleared) { scene.cleared = true; setTimeout(nextStep, 1500); }
+                }
+            }
+        }
+    </script>
+</body>
+</html>

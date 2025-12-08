@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EAIM 영어 문장 놀이터</title>
+    <title>EAIM 영어 문장 놀이터 (왕글씨 & 빠른소리)</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Fredoka:wght@400;600&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Noto Sans KR', sans-serif; background-color: #F0F9FF; }
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #EFF6FF; } /* Blue-50 */
         .font-eng { font-family: 'Fredoka', sans-serif; }
         .font-hand { font-family: 'Gaegu', cursive; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
@@ -19,302 +19,303 @@
         
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .card-btn { transition: all 0.2s; }
+        .card-btn { transition: all 0.1s; }
         .card-btn:active { transform: scale(0.95); }
-        .card-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .card-btn:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         
-        .tab-btn.active { background-color: #2563EB; color: white; border-color: #2563EB; transform: translateY(-2px); }
-        .tab-btn.inactive { background-color: white; color: #6B7280; border-color: #E5E7EB; }
+        .tab-btn { transition: all 0.2s; border-bottom-width: 4px; }
+        .tab-btn.active { background-color: #2563EB; color: white; border-color: #1E40AF; transform: translateY(-2px); }
+        .tab-btn.inactive { background-color: white; color: #6B7280; border-color: #DBEAFE; }
+        .tab-btn:active { transform: translateY(0); border-bottom-width: 2px; }
 
-        /* AI Typing Animation */
-        .typing-cursor::after {
-            content: '|';
-            animation: blink 1s step-start infinite;
+        .input-underline {
+            border-bottom: 4px dashed #BFDBFE;
+            transition: all 0.3s;
         }
-        @keyframes blink { 50% { opacity: 0; } }
+        .input-underline:focus {
+            border-bottom: 4px solid #2563EB;
+            background-color: rgba(239, 246, 255, 0.5);
+        }
+
+        .speaking-icon { animation: pulse-blue 1.5s infinite; }
+        @keyframes pulse-blue { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
+
+        @media print {
+            body { background: white; }
+            header, .sticky-nav, .no-print, #common-tools, .tab-btn { display: none !important; }
+            #root-container { box-shadow: none; border: none; width: 100%; max-width: 100%; }
+            .print-only-show { display: block !important; }
+            #tab-5 { display: block !important; }
+            .story-item { border: 1px solid #ccc; break-inside: avoid; }
+        }
     </style>
 </head>
-<body class="bg-blue-50 text-gray-800 min-h-screen pb-20">
+<body class="bg-blue-50 text-gray-800 min-h-screen pb-20 text-lg">
 
-    <div class="max-w-lg mx-auto min-h-screen bg-white shadow-2xl flex flex-col relative">
+    <div id="root-container" class="max-w-2xl mx-auto min-h-screen bg-white shadow-2xl flex flex-col relative border-x-2 border-blue-100">
         
-        <!-- 1. 헤더 -->
-        <header class="bg-gradient-to-r from-blue-500 to-indigo-600 p-5 text-white shadow-lg z-20 rounded-b-3xl">
+        <header class="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 text-white shadow-xl z-20 rounded-b-[2.5rem]">
             <div class="flex justify-between items-center">
                 <div>
-                    <h1 class="text-3xl font-bold font-hand flex items-center">
-                        <i class="fa-solid fa-shapes mr-2"></i> EAIM 영어놀이터
+                    <h1 class="text-4xl font-bold font-hand flex items-center drop-shadow-md">
+                        <i class="fa-solid fa-shapes mr-3 text-yellow-300"></i> EAIM 영어놀이터
                     </h1>
-                    <p class="text-xs text-blue-100 font-medium ml-1">Step-by-Step Sentence Builder</p>
+                    <p class="text-lg text-blue-100 font-medium ml-2 mt-1">Step-by-Step Sentence Builder</p>
                 </div>
-                <button onclick="resetAll()" class="text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition backdrop-blur-sm">
+                <button onclick="resetAll()" class="text-sm bg-white/20 hover:bg-white/30 px-4 py-2 rounded-2xl transition backdrop-blur-sm border-2 border-white/20">
                     <i class="fa-solid fa-rotate-right mr-1"></i> 초기화
                 </button>
             </div>
         </header>
 
-        <!-- 2. 탭 버튼 (Sticky) -->
-        <div class="sticky top-0 bg-white/95 backdrop-blur-sm z-10 shadow-sm border-b border-gray-100 p-3 flex justify-center gap-1 overflow-x-auto hide-scrollbar">
-            <button onclick="switchTab(1)" id="btn-tab-1" class="tab-btn active flex-1 min-w-[60px] py-2 rounded-xl font-bold text-sm shadow-sm transition-all font-hand leading-tight border-2">
-                1단계<br><span class="text-[10px] font-sans font-normal opacity-80">뼈대</span>
+        <div class="sticky-nav sticky top-0 bg-white/95 backdrop-blur-sm z-10 shadow-sm border-b-2 border-blue-100 p-4 flex justify-center gap-2 overflow-x-auto hide-scrollbar">
+            <button onclick="switchTab(1)" id="btn-tab-1" class="tab-btn active flex-1 min-w-[70px] py-3 rounded-2xl font-bold text-lg font-hand leading-tight border-2">
+                Step 1<br><span class="text-xs font-sans font-normal opacity-90">뼈대</span>
             </button>
-            <button onclick="switchTab(2)" id="btn-tab-2" class="tab-btn inactive flex-1 min-w-[60px] py-2 rounded-xl font-bold text-sm shadow-sm transition-all font-hand leading-tight border-2">
-                2단계<br><span class="text-[10px] font-sans font-normal opacity-80">이음</span>
+            <button onclick="switchTab(2)" id="btn-tab-2" class="tab-btn inactive flex-1 min-w-[70px] py-3 rounded-2xl font-bold text-lg font-hand leading-tight border-2">
+                Step 2<br><span class="text-xs font-sans font-normal opacity-90">이음</span>
             </button>
-            <button onclick="switchTab(3)" id="btn-tab-3" class="tab-btn inactive flex-1 min-w-[60px] py-2 rounded-xl font-bold text-sm shadow-sm transition-all font-hand leading-tight border-2">
-                3단계<br><span class="text-[10px] font-sans font-normal opacity-80">꾸밈</span>
+            <button onclick="switchTab(3)" id="btn-tab-3" class="tab-btn inactive flex-1 min-w-[70px] py-3 rounded-2xl font-bold text-lg font-hand leading-tight border-2">
+                Step 3<br><span class="text-xs font-sans font-normal opacity-90">꾸밈</span>
             </button>
-            <!-- 4단계 추가 (심화) -->
-            <button onclick="switchTab(4)" id="btn-tab-4" class="tab-btn inactive flex-1 min-w-[60px] py-2 rounded-xl font-bold text-sm shadow-sm transition-all font-hand leading-tight border-2 bg-purple-50 border-purple-200 text-purple-700">
-                4단계<br><span class="text-[10px] font-sans font-normal opacity-80">레벨업</span>
+            <button onclick="switchTab(4)" id="btn-tab-4" class="tab-btn inactive flex-1 min-w-[70px] py-3 rounded-2xl font-bold text-lg font-hand leading-tight border-2 bg-purple-50 border-purple-200 text-purple-700">
+                Step 4<br><span class="text-xs font-sans font-normal opacity-90">레벨업</span>
             </button>
-            <!-- 5단계 (AI) -->
-            <button onclick="switchTab(5)" id="btn-tab-5" class="tab-btn inactive flex-1 min-w-[60px] py-2 rounded-xl font-bold text-sm shadow-sm transition-all font-hand leading-tight border-2 bg-yellow-50 border-yellow-200 text-yellow-700">
-                5단계<br><span class="text-[10px] font-sans font-normal opacity-80">AI완성</span>
+            <button onclick="switchTab(5)" id="btn-tab-5" class="tab-btn inactive flex-1 min-w-[70px] py-3 rounded-2xl font-bold text-lg font-hand leading-tight border-2 bg-yellow-50 border-yellow-200 text-yellow-700">
+                Step 5<br><span class="text-xs font-sans font-normal opacity-90">완성</span>
             </button>
         </div>
 
-        <!-- 메인 콘텐츠 영역 -->
-        <div class="px-5 mt-4 flex-grow overflow-y-auto hide-scrollbar pb-10">
+        <div class="px-6 mt-6 flex-grow overflow-y-auto hide-scrollbar pb-10">
 
-            <!-- 공통 도구 (1,2,3단계에서만 보임) -->
-            <div id="common-tools">
-                <!-- 3. 감정/상태 카드 -->
-                <div class="bg-blue-50 p-4 rounded-3xl border border-blue-100 mb-4 shadow-inner">
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-xs font-bold text-blue-800 font-eng flex items-center">
-                            <span class="bg-blue-200 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-[10px] mr-2">1</span>
+            <div id="common-tools" class="mb-8">
+                <div class="bg-blue-50 p-6 rounded-[2rem] border-2 border-blue-100 mb-6 shadow-inner">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-blue-800 font-eng flex items-center">
+                            <span class="bg-blue-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2 shadow-sm">1</span>
                             Today's Emotion
                         </h3>
-                        <span class="text-[10px] text-blue-400">하나를 골라보세요</span>
+                        <span class="text-sm text-blue-400 font-bold">하나를 골라보세요!</span>
                     </div>
                     
-                    <div id="emotion-list" class="flex flex-wrap gap-2 justify-center pb-2"></div>
+                    <div id="emotion-list" class="flex flex-wrap gap-3 justify-center pb-2"></div>
                     
-                    <div id="selected-emotion-display" class="hidden mt-2 bg-white p-2 rounded-xl text-center border-2 border-blue-100 shadow-sm animate-fade-in">
-                        <span class="text-[10px] text-gray-400 mr-2">선택완료!</span>
-                        <span id="emotion-text" class="font-bold font-eng text-lg text-blue-600"></span>
+                    <div id="selected-emotion-display" class="hidden mt-4 bg-white p-4 rounded-2xl text-center border-4 border-blue-200 shadow-lg animate-fade-in">
+                        <span class="text-sm text-gray-400 mr-2 block mb-1">선택완료! (Selected)</span>
+                        <span id="emotion-text" class="font-bold font-eng text-3xl text-blue-600"></span>
                     </div>
                 </div>
 
-                <!-- 4. 단어 찾기 -->
-                <div class="bg-gray-800 p-4 rounded-3xl shadow-xl text-white mb-6 transform transition hover:scale-[1.01]">
-                    <h3 class="text-[10px] font-bold font-eng mb-2 text-gray-400 uppercase tracking-wider flex items-center">
-                        <i class="fa-solid fa-magnifying-glass mr-2"></i> Word Helper
+                <div class="bg-slate-800 p-6 rounded-[2rem] shadow-xl text-white transform transition hover:scale-[1.01] border-4 border-slate-700">
+                    <h3 class="text-sm font-bold font-eng mb-3 text-yellow-400 uppercase tracking-wider flex items-center">
+                        <i class="fa-solid fa-magnifying-glass mr-2"></i> Word Helper (단어 도우미)
                     </h3>
-                    <div class="flex gap-2">
-                        <input type="text" id="search-input" placeholder="궁금한 단어 (한글)" class="flex-1 px-3 py-1.5 rounded-lg text-gray-800 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-yellow-400">
-                        <button id="naver-btn" class="hidden bg-green-500 hover:bg-green-600 px-3 py-1.5 rounded-lg text-xs font-bold font-eng transition shadow-lg">사전</button>
+                    <div class="flex gap-3">
+                        <input type="text" id="search-input" placeholder="궁금한 단어 (예: 학교)" class="flex-1 px-4 py-3 rounded-xl text-gray-800 text-lg font-bold font-hand focus:outline-none focus:ring-4 focus:ring-yellow-400">
+                        <button id="naver-btn" class="hidden bg-green-500 hover:bg-green-600 px-4 py-3 rounded-xl text-sm font-bold font-eng transition shadow-lg text-white border-b-4 border-green-700 active:border-b-0 active:translate-y-1">사전</button>
                     </div>
-                    <div id="search-result-box" class="hidden mt-2 text-sm bg-gray-700/50 p-2 rounded-lg border border-gray-600"></div>
+                    <div id="search-result-box" class="hidden mt-3 text-lg bg-gray-700/80 p-3 rounded-xl border border-gray-600 text-center"></div>
                 </div>
             </div>
 
-            <hr class="border-gray-100 mb-6">
-
-            <!-- 5. 탭 내용 -->
-            
-            <!-- TAB 1: 뼈대 만들기 -->
-            <div id="tab-1" class="tab-content active space-y-6">
+            <div id="tab-1" class="tab-content active space-y-8">
                 <div class="text-center">
-                    <span class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-xs font-bold">Step 1</span>
-                    <h3 class="text-xl font-bold text-gray-700 font-hand mt-1">누가 무엇을 했나요?</h3>
+                    <span class="bg-blue-100 text-blue-600 px-4 py-1.5 rounded-full text-sm font-bold font-eng">Step 1</span>
+                    <h3 class="text-3xl font-bold text-gray-700 font-hand mt-2">누가 무엇을 했나요?</h3>
                 </div>
                 
-                <div class="bg-white p-4 rounded-2xl border-2 border-red-100 shadow-sm relative">
-                    <div class="absolute -top-3 left-4 bg-red-100 text-red-500 px-2 py-0.5 rounded text-[10px] font-bold">WHO (주어)</div>
-                    <input type="text" id="l1-who" class="w-full text-center text-xl font-eng font-bold text-gray-700 focus:outline-none placeholder-gray-200" placeholder="I" oninput="updateL1()">
+                <div class="bg-white p-6 rounded-[2rem] border-4 border-red-100 shadow-md relative group hover:border-red-300 transition">
+                    <div class="absolute -top-3 left-6 bg-red-100 text-red-500 px-3 py-1 rounded-lg text-xs font-bold font-eng">WHO (주어)</div>
+                    <input type="text" id="l1-who" class="input-underline w-full text-center text-5xl font-eng font-bold text-gray-700 focus:outline-none placeholder-gray-200 py-2" placeholder="I" oninput="updateL1()">
                 </div>
                 
-                <div class="text-center text-gray-300 text-lg"><i class="fa-solid fa-arrow-down"></i></div>
+                <div class="text-center text-blue-300 text-2xl animate-bounce"><i class="fa-solid fa-arrow-down"></i></div>
 
-                <div class="bg-yellow-50 p-4 rounded-2xl border-2 border-yellow-200 shadow-sm relative">
-                    <div class="absolute -top-3 left-4 bg-yellow-100 text-yellow-600 px-2 py-0.5 rounded text-[10px] font-bold">ACTION (동사)</div>
-                    <div id="action-list" class="flex flex-wrap gap-2 justify-center py-2"></div>
-                    <div class="mt-3 bg-white px-3 py-2 rounded-xl border border-yellow-100 flex items-center">
-                         <span class="text-[10px] font-bold text-gray-400 mr-2">직접입력:</span>
-                         <input type="text" id="l1-action" class="flex-1 text-center text-lg font-eng focus:outline-none text-blue-600 font-bold" placeholder="feel" oninput="updateL1()">
+                <div class="bg-yellow-50 p-6 rounded-[2rem] border-4 border-yellow-200 shadow-md relative group hover:border-yellow-400 transition">
+                    <div class="absolute -top-3 left-6 bg-yellow-100 text-yellow-700 px-3 py-1 rounded-lg text-xs font-bold font-eng">ACTION (동사)</div>
+                    <div id="action-list" class="flex flex-wrap gap-3 justify-center py-4"></div>
+                    <div class="mt-4 bg-white px-4 py-3 rounded-2xl border-2 border-yellow-100 flex items-center shadow-sm">
+                         <span class="text-xs font-bold text-gray-400 mr-3 whitespace-nowrap">직접입력:</span>
+                         <input type="text" id="l1-action" class="flex-1 text-center text-3xl font-eng focus:outline-none text-blue-600 font-bold" placeholder="feel" oninput="updateL1()">
                     </div>
                 </div>
 
-                <div class="text-center text-gray-300 text-lg"><i class="fa-solid fa-arrow-down"></i></div>
+                <div class="text-center text-blue-300 text-2xl animate-bounce"><i class="fa-solid fa-arrow-down"></i></div>
 
-                <div class="bg-white p-4 rounded-2xl border-2 border-green-100 shadow-sm relative">
-                    <div class="absolute -top-3 left-4 bg-green-100 text-green-600 px-2 py-0.5 rounded text-[10px] font-bold">WHAT (무엇/상태)</div>
-                    <input type="text" id="l1-what" class="w-full text-center text-xl font-eng font-bold text-gray-700 focus:outline-none placeholder-gray-200" placeholder="..." oninput="updateL1()">
+                <div class="bg-white p-6 rounded-[2rem] border-4 border-green-100 shadow-md relative group hover:border-green-300 transition">
+                    <div class="absolute -top-3 left-6 bg-green-100 text-green-600 px-3 py-1 rounded-lg text-xs font-bold font-eng">WHAT (무엇/상태)</div>
+                    <input type="text" id="l1-what" class="input-underline w-full text-center text-5xl font-eng font-bold text-gray-700 focus:outline-none placeholder-gray-200 py-2" placeholder="..." oninput="updateL1()">
                 </div>
 
-                <div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-1 rounded-2xl shadow-lg mt-6">
-                    <div class="bg-white rounded-xl p-5 text-center">
-                        <p class="text-xs text-gray-400 mb-1 font-hand">완성된 문장</p>
-                        <p id="l1-result" class="font-eng text-2xl mb-4 text-gray-800 font-bold tracking-tight">...</p>
-                        <button onclick="speakL1()" class="w-full bg-blue-100 hover:bg-blue-200 text-blue-600 py-3 rounded-xl font-bold transition flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-volume-high"></i> 들어보기 (Listen)
+                <div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-1.5 rounded-[2rem] shadow-xl mt-8">
+                    <div class="bg-white rounded-[1.7rem] p-6 text-center">
+                        <p class="text-sm text-gray-400 mb-2 font-hand font-bold">완성된 문장</p>
+                        <p id="l1-result" class="font-eng text-4xl mb-6 text-gray-800 font-bold tracking-tight break-words">...</p>
+                        <button onclick="speakL1()" class="w-full bg-blue-100 hover:bg-blue-200 text-blue-700 py-4 rounded-2xl font-bold transition flex items-center justify-center gap-3 text-xl shadow-md transform active:scale-95">
+                            <i id="icon-vol-1" class="fa-solid fa-volume-high"></i> Listen (들어보기)
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- TAB 2: 문장 이어 붙이기 (복문) -->
-            <div id="tab-2" class="tab-content space-y-6">
+            <div id="tab-2" class="tab-content space-y-8">
                 <div class="text-center">
-                    <span class="bg-purple-100 text-purple-600 px-3 py-1 rounded-full text-xs font-bold">Step 2</span>
-                    <h3 class="text-xl font-bold text-gray-700 font-hand mt-1">문장 길게 만들기 (접속사)</h3>
+                    <span class="bg-purple-100 text-purple-600 px-4 py-1.5 rounded-full text-sm font-bold font-eng">Step 2</span>
+                    <h3 class="text-3xl font-bold text-gray-700 font-hand mt-2">문장 길게 만들기 (접속사)</h3>
                 </div>
                 
-                <div class="bg-purple-50 p-5 rounded-3xl border-2 border-purple-100 space-y-4">
-                    <div class="relative bg-white p-3 rounded-2xl border border-purple-100 shadow-sm">
-                        <span class="absolute -top-2 left-3 bg-purple-100 text-purple-600 text-[10px] px-2 py-0.5 rounded-full font-bold">앞 문장 (1단계에서 옴)</span>
-                        <input type="text" id="l2-a" class="w-full text-center font-eng text-lg text-gray-700 bg-transparent border-none focus:outline-none" placeholder="I feel happy" readonly>
+                <div class="bg-purple-50 p-6 rounded-[2rem] border-4 border-purple-100 space-y-6 shadow-inner">
+                    <div class="relative bg-white p-4 rounded-2xl border-2 border-purple-200 shadow-sm">
+                        <span class="absolute -top-3 left-6 bg-purple-100 text-purple-600 text-xs px-2 py-1 rounded font-bold font-eng">앞 문장 (Step 1)</span>
+                        <input type="text" id="l2-a" class="w-full text-center font-eng text-2xl text-gray-700 bg-transparent border-none focus:outline-none" placeholder="I feel happy" readonly>
                     </div>
                     
-                    <div class="flex justify-center items-center gap-2 py-1">
-                        <div class="h-[1px] bg-purple-200 flex-1"></div>
-                        <div class="flex gap-1">
-                            <button onclick="setConn('because')" class="conn-btn px-3 py-1.5 rounded-full text-xs font-bold font-eng bg-purple-500 text-white shadow-md hover:bg-purple-600">because</button>
-                            <button onclick="setConn('when')" class="conn-btn px-3 py-1.5 rounded-full text-xs font-bold font-eng bg-white text-gray-500 border hover:bg-gray-50">when</button>
-                            <button onclick="setConn('but')" class="conn-btn px-3 py-1.5 rounded-full text-xs font-bold font-eng bg-white text-gray-500 border hover:bg-gray-50">but</button>
-                        </div>
-                        <div class="h-[1px] bg-purple-200 flex-1"></div>
+                    <div class="flex justify-center items-center gap-3 py-2 bg-white/50 rounded-2xl p-2">
+                        <button onclick="setConn('because')" class="conn-btn px-4 py-2 rounded-xl text-base font-bold font-eng bg-purple-500 text-white shadow-md hover:bg-purple-600 border-b-4 border-purple-700 active:border-b-0 active:translate-y-1">because</button>
+                        <button onclick="setConn('when')" class="conn-btn px-4 py-2 rounded-xl text-base font-bold font-eng bg-white text-gray-500 border-2 hover:bg-gray-50 border-gray-300">when</button>
+                        <button onclick="setConn('but')" class="conn-btn px-4 py-2 rounded-xl text-base font-bold font-eng bg-white text-gray-500 border-2 hover:bg-gray-50 border-gray-300">but</button>
                     </div>
 
-                    <div class="relative bg-white p-4 rounded-2xl border-2 border-dashed border-purple-300">
-                        <span class="absolute -top-2 left-3 bg-purple-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">뒤 문장 만들기</span>
+                    <div class="relative bg-white p-6 rounded-[2rem] border-4 border-dashed border-purple-300 hover:border-purple-400 transition">
+                        <span class="absolute -top-3 left-6 bg-purple-500 text-white text-xs px-2 py-1 rounded font-bold font-eng shadow-sm">뒤 문장 만들기</span>
                         
-                        <div class="flex flex-col gap-2 mt-1">
-                            <div class="flex items-center gap-2">
-                                <span class="text-[10px] bg-red-100 text-red-500 px-1.5 py-0.5 rounded font-bold w-10 text-center">Who</span>
-                                <input type="text" id="l2-b-who" class="flex-1 p-2 bg-gray-50 rounded-lg text-sm font-eng focus:outline-none focus:ring-1 focus:ring-purple-300" placeholder="누가 (I)" oninput="updateL2()">
+                        <div class="flex flex-col gap-4 mt-2">
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs bg-red-100 text-red-500 px-2 py-1 rounded-lg font-bold w-14 text-center">Who</span>
+                                <input type="text" id="l2-b-who" class="flex-1 p-3 bg-gray-50 rounded-xl text-xl font-eng focus:outline-none focus:ring-2 focus:ring-purple-300 border border-gray-200" placeholder="누가 (I)" oninput="updateL2()">
                             </div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-[10px] bg-yellow-100 text-yellow-600 px-1.5 py-0.5 rounded font-bold w-10 text-center">Action</span>
-                                <input type="text" id="l2-b-action" class="flex-1 p-2 bg-gray-50 rounded-lg text-sm font-eng focus:outline-none focus:ring-1 focus:ring-purple-300" placeholder="동사 (met)" oninput="updateL2()">
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs bg-yellow-100 text-yellow-600 px-2 py-1 rounded-lg font-bold w-14 text-center">Action</span>
+                                <input type="text" id="l2-b-action" class="flex-1 p-3 bg-gray-50 rounded-xl text-xl font-eng focus:outline-none focus:ring-2 focus:ring-purple-300 border border-gray-200" placeholder="동사 (met)" oninput="updateL2()">
                             </div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-[10px] bg-green-100 text-green-600 px-1.5 py-0.5 rounded font-bold w-10 text-center">What</span>
-                                <input type="text" id="l2-b-what" class="flex-1 p-2 bg-gray-50 rounded-lg text-sm font-eng focus:outline-none focus:ring-1 focus:ring-purple-300" placeholder="무엇을 (my friend)" oninput="updateL2()">
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-lg font-bold w-14 text-center">What</span>
+                                <input type="text" id="l2-b-what" class="flex-1 p-3 bg-gray-50 rounded-xl text-xl font-eng focus:outline-none focus:ring-2 focus:ring-purple-300 border border-gray-200" placeholder="무엇을 (my friend)" oninput="updateL2()">
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-gradient-to-r from-purple-500 to-pink-500 p-1 rounded-2xl shadow-lg mt-4">
-                    <div class="bg-white rounded-xl p-5 text-center">
-                        <p class="text-xs text-gray-400 mb-1 font-hand">지금까지 완성된 문장</p>
-                        <p id="l2-result" class="font-eng text-xl mb-4 text-gray-800 font-bold leading-relaxed">...</p>
-                        <button onclick="speakL2()" class="w-full bg-purple-100 hover:bg-purple-200 text-purple-600 py-3 rounded-xl font-bold transition flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-volume-high"></i> 들어보기
+                <div class="bg-gradient-to-r from-purple-500 to-pink-500 p-1.5 rounded-[2rem] shadow-xl mt-4">
+                    <div class="bg-white rounded-[1.7rem] p-6 text-center">
+                        <p class="text-sm text-gray-400 mb-2 font-hand font-bold">지금까지 완성된 문장</p>
+                        <p id="l2-result" class="font-eng text-3xl mb-6 text-gray-800 font-bold leading-relaxed break-words">...</p>
+                        <button onclick="speakL2()" class="w-full bg-purple-100 hover:bg-purple-200 text-purple-700 py-4 rounded-2xl font-bold transition flex items-center justify-center gap-3 text-xl shadow-md transform active:scale-95">
+                            <i id="icon-vol-2" class="fa-solid fa-volume-high"></i> Listen (들어보기)
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- TAB 3: 꾸며 보기 -->
-            <div id="tab-3" class="tab-content space-y-6">
+            <div id="tab-3" class="tab-content space-y-8">
                 <div class="text-center">
-                    <span class="bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full text-xs font-bold">Step 3</span>
-                    <h3 class="text-xl font-bold text-gray-700 font-hand mt-1">더 자세하게 말하기</h3>
+                    <span class="bg-indigo-100 text-indigo-600 px-4 py-1.5 rounded-full text-sm font-bold font-eng">Step 3</span>
+                    <h3 class="text-3xl font-bold text-gray-700 font-hand mt-2">더 자세하게 말하기</h3>
                 </div>
                 
-                <div class="bg-indigo-50 p-6 rounded-3xl border-2 border-indigo-100 space-y-4">
-                    <div class="relative bg-white p-3 rounded-2xl border border-indigo-200 shadow-sm">
-                        <span class="absolute -top-2 left-3 bg-indigo-100 text-indigo-600 text-[10px] px-2 py-0.5 rounded-full font-bold">기본 문장 (2단계에서 옴)</span>
-                        <input type="text" id="l3-base" class="w-full text-center font-eng text-lg text-indigo-900 bg-transparent border-none focus:outline-none" placeholder="I feel happy because I met my friend" readonly>
+                <div class="bg-indigo-50 p-6 rounded-[2rem] border-4 border-indigo-100 space-y-6 shadow-inner">
+                    <div class="relative bg-white p-4 rounded-2xl border-2 border-indigo-200 shadow-sm">
+                        <span class="absolute -top-3 left-6 bg-indigo-100 text-indigo-600 text-xs px-2 py-1 rounded font-bold font-eng">기본 문장 (Step 2)</span>
+                        <input type="text" id="l3-base" class="w-full text-center font-eng text-2xl text-indigo-900 bg-transparent border-none focus:outline-none" placeholder="I feel happy because I met my friend" readonly>
                     </div>
                     
-                    <div class="space-y-3">
-                        <div class="flex items-center gap-3 bg-white p-3 rounded-2xl shadow-sm border border-transparent focus-within:border-indigo-300 transition">
-                            <span class="text-[10px] font-bold bg-indigo-100 text-indigo-600 px-3 py-1.5 rounded-lg w-16 text-center">Where</span>
-                            <input type="text" id="l3-where" class="flex-1 font-eng focus:outline-none text-base text-gray-700" placeholder="어디서? (at school)" oninput="updateL3()">
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border-2 border-transparent focus-within:border-indigo-300 transition">
+                            <span class="text-xs font-bold bg-indigo-100 text-indigo-600 px-3 py-1.5 rounded-lg w-20 text-center">Where</span>
+                            <input type="text" id="l3-where" class="flex-1 font-eng focus:outline-none text-2xl text-gray-700 placeholder-gray-300" placeholder="어디서? (at school)" oninput="updateL3()">
                         </div>
-                        <div class="flex items-center gap-3 bg-white p-3 rounded-2xl shadow-sm border border-transparent focus-within:border-pink-300 transition">
-                            <span class="text-[10px] font-bold bg-pink-100 text-pink-600 px-3 py-1.5 rounded-lg w-16 text-center">How</span>
-                            <input type="text" id="l3-how" class="flex-1 font-eng focus:outline-none text-base text-gray-700" placeholder="어떻게? (happily)" oninput="updateL3()">
+                        <div class="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border-2 border-transparent focus-within:border-pink-300 transition">
+                            <span class="text-xs font-bold bg-pink-100 text-pink-600 px-3 py-1.5 rounded-lg w-20 text-center">How</span>
+                            <input type="text" id="l3-how" class="flex-1 font-eng focus:outline-none text-2xl text-gray-700 placeholder-gray-300" placeholder="어떻게? (happily)" oninput="updateL3()">
                         </div>
-                        <div class="flex items-center gap-3 bg-white p-3 rounded-2xl shadow-sm border border-transparent focus-within:border-yellow-300 transition">
-                            <span class="text-[10px] font-bold bg-yellow-100 text-yellow-600 px-3 py-1.5 rounded-lg w-16 text-center">When</span>
-                            <input type="text" id="l3-when" class="flex-1 font-eng focus:outline-none text-base text-gray-700" placeholder="언제? (everyday)" oninput="updateL3()">
+                        <div class="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border-2 border-transparent focus-within:border-yellow-300 transition">
+                            <span class="text-xs font-bold bg-yellow-100 text-yellow-600 px-3 py-1.5 rounded-lg w-20 text-center">When</span>
+                            <input type="text" id="l3-when" class="flex-1 font-eng focus:outline-none text-2xl text-gray-700 placeholder-gray-300" placeholder="언제? (everyday)" oninput="updateL3()">
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-gradient-to-r from-indigo-500 to-blue-500 p-1 rounded-2xl shadow-lg mt-4">
-                    <div class="bg-white rounded-xl p-5 text-center">
-                        <p class="text-xs text-gray-400 mb-1 font-hand">완성된 문장</p>
-                        <p id="l3-result" class="font-eng text-xl mb-4 text-gray-800 font-bold leading-relaxed">...</p>
-                        <div class="flex gap-2">
-                            <button onclick="addToStory(3)" class="flex-1 bg-white hover:bg-gray-50 border text-gray-600 py-3 rounded-xl font-bold shadow-sm transition flex items-center justify-center gap-1 transform active:scale-95">
-                                <i class="fa-solid fa-download text-sm"></i> 바로 저장
+                <div class="bg-gradient-to-r from-indigo-500 to-blue-500 p-1.5 rounded-[2rem] shadow-xl mt-4">
+                    <div class="bg-white rounded-[1.7rem] p-6 text-center">
+                        <p class="text-sm text-gray-400 mb-2 font-hand font-bold">완성된 문장</p>
+                        <p id="l3-result" class="font-eng text-3xl mb-6 text-gray-800 font-bold leading-relaxed break-words">...</p>
+                        <div class="flex gap-3">
+                            <button onclick="addToStory(3)" class="flex-1 bg-white hover:bg-gray-50 border-2 text-gray-600 py-4 rounded-2xl font-bold shadow-sm transition flex items-center justify-center gap-2 transform active:scale-95 text-lg">
+                                <i class="fa-solid fa-download"></i> 바로 저장
                             </button>
-                            <button onclick="goToLevelUp()" class="flex-[2] bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-xl font-bold shadow-md transition flex items-center justify-center gap-2 transform active:scale-95">
-                                <i class="fa-solid fa-arrow-up-right-dots"></i> 4단계: 레벨업 도전!
+                            <button onclick="goToLevelUp()" class="flex-[2] bg-purple-500 hover:bg-purple-600 text-white py-4 rounded-2xl font-bold shadow-md transition flex items-center justify-center gap-2 transform active:scale-95 text-lg border-b-4 border-purple-700 active:border-b-0 active:translate-y-1">
+                                <i class="fa-solid fa-arrow-up-right-dots"></i> 4단계: 레벨업!
                             </button>
                         </div>
-                        <p class="text-[10px] text-gray-400 mt-2">* '바로 저장'하면 5단계로 문장이 들어갑니다.</p>
+                        <p class="text-xs text-gray-400 mt-3">* 저장하면 5단계로 문장이 들어갑니다.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- TAB 4: 레벨업 (Challenge) -->
-            <div id="tab-4" class="tab-content space-y-6">
+            <div id="tab-4" class="tab-content space-y-8">
                 <div class="text-center">
-                    <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-bold">Step 4</span>
-                    <h3 class="text-xl font-bold text-gray-700 font-hand mt-1">심화: 문장 업그레이드</h3>
-                    <p class="text-xs text-gray-400">관계대명사(who/which)나 to를 써보세요!</p>
+                    <span class="bg-purple-100 text-purple-700 px-4 py-1.5 rounded-full text-sm font-bold font-eng">Step 4</span>
+                    <h3 class="text-3xl font-bold text-gray-700 font-hand mt-2">심화: 문장 업그레이드</h3>
+                    <p class="text-sm text-gray-400 mt-1">관계대명사(who/which)나 to를 써보세요!</p>
                 </div>
 
-                <div class="bg-purple-50 p-5 rounded-3xl border border-purple-200 shadow-inner">
-                    <label class="text-xs font-bold text-purple-700 block mb-2">나의 문장 수정하기 (Editor)</label>
-                    <textarea id="l4-input" class="w-full h-32 p-4 rounded-2xl border-none focus:ring-2 focus:ring-purple-400 font-eng text-lg text-gray-800 resize-none" placeholder="3단계에서 만든 문장이 여기에 나옵니다."></textarea>
+                <div class="bg-purple-50 p-6 rounded-[2rem] border-2 border-purple-200 shadow-inner">
+                    <label class="text-sm font-bold text-purple-700 block mb-3 ml-2"><i class="fa-solid fa-pen-nib mr-2"></i> 나의 문장 수정하기 (Editor)</label>
+                    <textarea id="l4-input" class="w-full h-48 p-5 rounded-3xl border-4 border-purple-200 focus:border-purple-500 focus:ring-0 font-eng text-3xl text-gray-800 resize-none leading-relaxed shadow-sm bg-white" placeholder="3단계에서 만든 문장이 여기에 나옵니다."></textarea>
                     
-                    <div class="flex gap-2 mt-3 overflow-x-auto pb-1 hide-scrollbar">
-                        <button onclick="insertText(' who ')" class="px-3 py-1 bg-white border border-purple-200 rounded-lg text-xs font-bold text-purple-600 hover:bg-purple-100">+ who</button>
-                        <button onclick="insertText(' which ')" class="px-3 py-1 bg-white border-purple-200 rounded-lg text-xs font-bold text-purple-600 hover:bg-purple-100">+ which</button>
-                        <button onclick="insertText(' to ')" class="px-3 py-1 bg-white border-purple-200 rounded-lg text-xs font-bold text-purple-600 hover:bg-purple-100">+ to</button>
-                        <button onclick="insertText(' that ')" class="px-3 py-1 bg-white border-purple-200 rounded-lg text-xs font-bold text-purple-600 hover:bg-purple-100">+ that</button>
+                    <div class="flex gap-3 mt-4 overflow-x-auto pb-2 hide-scrollbar">
+                        <button onclick="insertText(' who ')" class="px-4 py-2 bg-white border-2 border-purple-200 rounded-xl text-sm font-bold text-purple-600 hover:bg-purple-100 flex-shrink-0 shadow-sm">+ who</button>
+                        <button onclick="insertText(' which ')" class="px-4 py-2 bg-white border-2 border-purple-200 rounded-xl text-sm font-bold text-purple-600 hover:bg-purple-100 flex-shrink-0 shadow-sm">+ which</button>
+                        <button onclick="insertText(' to ')" class="px-4 py-2 bg-white border-2 border-purple-200 rounded-xl text-sm font-bold text-purple-600 hover:bg-purple-100 flex-shrink-0 shadow-sm">+ to</button>
+                        <button onclick="insertText(' that ')" class="px-4 py-2 bg-white border-2 border-purple-200 rounded-xl text-sm font-bold text-purple-600 hover:bg-purple-100 flex-shrink-0 shadow-sm">+ that</button>
                     </div>
                 </div>
 
-                <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-lg">
-                    <button onclick="addToStory(4)" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-bold shadow-md transition flex items-center justify-center gap-2 transform active:scale-95">
+                <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-xl">
+                    <button onclick="addToStory(4)" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-2xl font-bold shadow-lg transition flex items-center justify-center gap-3 transform active:scale-95 text-xl border-b-4 border-purple-800 active:border-b-0 active:translate-y-1">
                         <i class="fa-solid fa-check-circle"></i> 수정 완료 & 저장하기
                     </button>
-                    <p class="text-[10px] text-center text-gray-400 mt-2">* 저장하면 5단계 목록에 추가됩니다.</p>
                 </div>
             </div>
 
-            <!-- TAB 5: 모아보기 & AI 완성 -->
-            <div id="tab-5" class="tab-content space-y-6">
-                <div class="text-center">
-                    <span class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-bold">Step 5</span>
-                    <h3 class="text-xl font-bold text-gray-700 font-hand mt-1">나만의 영어 이야기</h3>
+            <div id="tab-5" class="tab-content space-y-8">
+                <div class="text-center no-print">
+                    <span class="bg-yellow-100 text-yellow-700 px-4 py-1.5 rounded-full text-sm font-bold font-eng">Step 5</span>
+                    <h3 class="text-3xl font-bold text-gray-700 font-hand mt-2">나만의 영어 이야기</h3>
                 </div>
 
-                <div class="bg-white p-5 rounded-3xl border border-gray-200 shadow-md min-h-[200px]">
-                    <h4 class="text-xs font-bold text-gray-400 uppercase mb-3 flex justify-between items-center">
-                        <span>My Sentences</span>
-                        <span id="story-count" class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">0</span>
+                <div class="bg-white p-8 rounded-[2.5rem] border-2 border-gray-200 shadow-lg min-h-[300px]">
+                    <h4 class="text-sm font-bold text-gray-400 uppercase mb-4 flex justify-between items-center border-b pb-2">
+                        <span>My English Story</span>
+                        <span id="story-count" class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full font-bold">0</span>
                     </h4>
                     
-                    <ul id="story-list" class="space-y-3 mb-6">
-                        <li class="text-center text-gray-400 text-sm py-10 italic">
+                    <ul id="story-list" class="space-y-4 mb-8">
+                        <li class="text-center text-gray-400 text-lg py-16 italic no-print">
                             아직 저장된 문장이 없어요.<br>3단계나 4단계에서 '저장하기'를 눌러보세요!
                         </li>
                     </ul>
 
-                    <!-- AI Tools -->
-                    <div id="ai-section" class="border-t border-gray-100 pt-4 hidden">
-                        <button onclick="runAIGrammarCheck()" class="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 transition hover:scale-[1.02]">
+                    <div id="action-buttons" class="grid grid-cols-2 gap-4 mb-6 no-print hidden">
+                        <button onclick="printPage()" class="bg-slate-700 hover:bg-slate-800 text-white py-4 rounded-2xl font-bold text-lg shadow-md flex items-center justify-center gap-2 transition hover:scale-[1.02]">
+                            <i class="fa-solid fa-print"></i> 인쇄하기
+                        </button>
+                        <button onclick="downloadTxt()" class="bg-blue-500 hover:bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg shadow-md flex items-center justify-center gap-2 transition hover:scale-[1.02]">
+                            <i class="fa-solid fa-file-arrow-down"></i> 저장하기
+                        </button>
+                    </div>
+
+                    <div id="ai-section" class="border-t-2 border-gray-100 pt-6 hidden no-print">
+                        <button onclick="runAIGrammarCheck()" class="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold py-4 rounded-2xl shadow-lg flex items-center justify-center gap-3 transition hover:scale-[1.02] text-xl">
                             <i class="fa-solid fa-wand-magic-sparkles text-white"></i> AI 선생님의 첨삭 (Polish)
                         </button>
                         
-                        <!-- AI Result -->
-                        <div id="ai-result-box" class="mt-4 bg-yellow-50 rounded-xl p-4 border border-yellow-100 hidden">
-                            <h5 class="text-xs font-bold text-yellow-800 mb-2 flex items-center">
+                        <div id="ai-result-box" class="mt-6 bg-yellow-50 rounded-3xl p-6 border-2 border-yellow-100 hidden">
+                            <h5 class="text-sm font-bold text-yellow-800 mb-3 flex items-center">
                                 <i class="fa-solid fa-robot mr-2"></i> AI's Feedback
                             </h5>
-                            <p id="ai-text" class="font-eng text-lg text-gray-700 leading-relaxed typing-cursor"></p>
-                            <button onclick="copyAIResult()" class="mt-3 text-xs bg-white border border-gray-200 px-3 py-1 rounded-lg text-gray-500 hover:text-yellow-600">
+                            <p id="ai-text" class="font-eng text-2xl text-gray-700 leading-relaxed typing-cursor"></p>
+                            <button onclick="copyAIResult()" class="mt-4 text-sm bg-white border border-gray-200 px-4 py-2 rounded-xl text-gray-500 hover:text-yellow-600 font-bold">
                                 복사하기
                             </button>
                         </div>
@@ -324,7 +325,7 @@
 
         </div>
 
-        <div class="text-center py-6 bg-gray-50 text-gray-400 text-[10px] font-eng mt-4 rounded-t-3xl">
+        <div class="text-center py-6 bg-blue-50 text-blue-300 text-xs font-eng mt-4 rounded-t-[2.5rem] no-print">
             Designed by Park Seong-ae with EAIM
         </div>
     </div>
@@ -371,22 +372,46 @@
         ];
 
         let currentConn = 'because';
-        let sentenceHistory = []; // 문장 저장소
+        let sentenceHistory = [];
+        let voices = [];
+        let englishVoice = null;
 
-        // --- 초기화 ---
+        // --- 초기화 (핵심: 소리 미리 준비하기) ---
         window.onload = function() {
             renderEmotions();
             renderActions();
             updateL1(); updateL2(); updateL3();
+            
+            // 1. 소리 기능 예열 (중요)
+            if (window.speechSynthesis) {
+                // 아무 소리도 안 나는 빈 문장을 재생해서 엔진을 깨움
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.resume();
+            }
+
+            // 2. 목소리 찾기
+            loadVoices();
+            if (window.speechSynthesis.onvoiceschanged !== undefined) {
+                window.speechSynthesis.onvoiceschanged = loadVoices;
+            }
         };
+
+        function loadVoices() {
+            voices = window.speechSynthesis.getVoices();
+            // 영어 목소리 미리 찾아놓기 (매번 찾으면 느림)
+            englishVoice = voices.find(v => v.lang.includes('en-US') || v.name.includes('Google US English')) 
+                        || voices.find(v => v.lang.includes('en'))
+                        || null;
+        }
 
         function renderEmotions() {
             const list = document.getElementById('emotion-list');
+            list.innerHTML = "";
             EMOTIONS.forEach(emo => {
                 const btn = document.createElement('button');
-                btn.className = "card-btn w-14 h-16 rounded-xl border-2 flex flex-col items-center justify-center shadow-sm transition-transform bg-white";
+                btn.className = "card-btn w-20 h-24 rounded-2xl border-4 flex flex-col items-center justify-center shadow-sm transition-transform bg-white";
                 btn.style.borderColor = emo.color;
-                btn.innerHTML = `<span class="text-xl mb-1">${emo.emoji}</span><span class="text-[9px] font-bold font-eng text-gray-600">${emo.name}</span>`;
+                btn.innerHTML = `<span class="text-3xl mb-1">${emo.emoji}</span><span class="text-xs font-bold font-eng text-gray-600">${emo.name}</span>`;
                 btn.onclick = () => selectEmotion(emo);
                 list.appendChild(btn);
             });
@@ -394,10 +419,11 @@
 
         function renderActions() {
             const list = document.getElementById('action-list');
+            list.innerHTML = "";
             ACTIONS.forEach(act => {
                 const btn = document.createElement('button');
-                btn.className = "card-btn w-14 h-14 rounded-xl border-2 border-yellow-300 flex flex-col items-center justify-center shadow-sm bg-white hover:bg-yellow-50";
-                btn.innerHTML = `<span class="text-lg">${act.emoji}</span><span class="text-[9px] font-bold font-eng text-gray-700">${act.en}</span>`;
+                btn.className = "card-btn w-20 h-20 rounded-2xl border-4 border-yellow-300 flex flex-col items-center justify-center shadow-sm bg-white hover:bg-yellow-50";
+                btn.innerHTML = `<span class="text-3xl">${act.emoji}</span><span class="text-xs font-bold font-eng text-gray-700">${act.en}</span>`;
                 btn.onclick = () => {
                     document.getElementById('l1-action').value = act.en;
                     updateL1();
@@ -427,9 +453,9 @@
                 naverBtn.classList.remove('hidden');
                 naverBtn.onclick = () => window.open(`https://en.dict.naver.com/#/search?query=${term}`, '_blank');
                 if (VOCAB_DB[term]) {
-                    resultBox.innerHTML = `<span class="text-gray-300">${term}</span> 👉 <span class="text-yellow-400 font-bold font-eng text-lg">${VOCAB_DB[term]}</span>`;
+                    resultBox.innerHTML = `<span class="text-gray-300">${term}</span> 👉 <span class="text-yellow-400 font-bold font-eng text-2xl">${VOCAB_DB[term]}</span>`;
                 } else {
-                    resultBox.innerHTML = `<span class="text-gray-400 text-xs">앱 사전에 없네요.<br>오른쪽 '사전' 버튼을 눌러보세요!</span>`;
+                    resultBox.innerHTML = `<span class="text-gray-400 text-sm">앱 사전에 없네요.<br>오른쪽 '사전' 버튼을 눌러보세요!</span>`;
                 }
             } else {
                 resultBox.classList.add('hidden');
@@ -441,31 +467,24 @@
             [1, 2, 3, 4, 5].forEach(i => {
                 const btn = document.getElementById(`btn-tab-${i}`);
                 const content = document.getElementById(`tab-${i}`);
-                
-                // 공통 도구(감정,사전)는 1,2,3단계에서만 표시
                 const commonTools = document.getElementById('common-tools');
+                
                 if(tabNum >= 4) commonTools.classList.add('hidden');
                 else commonTools.classList.remove('hidden');
 
                 if (i === tabNum) {
-                    btn.classList.add('active');
-                    btn.classList.remove('inactive');
-                    if(i===1) { btn.style.backgroundColor = '#2563EB'; btn.style.borderColor = '#2563EB'; }
-                    else if(i===2) { btn.style.backgroundColor = '#9333EA'; btn.style.borderColor = '#9333EA'; }
-                    else if(i===3) { btn.style.backgroundColor = '#4F46E5'; btn.style.borderColor = '#4F46E5'; }
-                    else if(i===4) { btn.style.backgroundColor = '#9333EA'; btn.style.borderColor = '#9333EA'; btn.style.color='white'; }
-                    else if(i===5) { btn.style.backgroundColor = '#CA8A04'; btn.style.borderColor = '#CA8A04'; btn.style.color='white'; }
-                    
+                    btn.classList.add('active'); btn.classList.remove('inactive');
+                    if(i===1) { btn.style.backgroundColor = '#2563EB'; btn.style.borderColor = '#1E40AF'; }
+                    else if(i===2) { btn.style.backgroundColor = '#9333EA'; btn.style.borderColor = '#7E22CE'; }
+                    else if(i===3) { btn.style.backgroundColor = '#4F46E5'; btn.style.borderColor = '#4338CA'; }
+                    else if(i===4) { btn.style.backgroundColor = '#7E22CE'; btn.style.borderColor = '#6B21A8'; btn.style.color='white'; }
+                    else if(i===5) { btn.style.backgroundColor = '#CA8A04'; btn.style.borderColor = '#A16207'; btn.style.color='white'; }
                     content.classList.add('active');
                 } else {
-                    btn.classList.remove('active');
-                    btn.classList.add('inactive');
-                    btn.style.backgroundColor = 'white';
-                    btn.style.borderColor = '#E5E7EB';
-                    btn.style.color = '#6B7280';
+                    btn.classList.remove('active'); btn.classList.add('inactive');
+                    btn.style.backgroundColor = 'white'; btn.style.borderColor = '#E5E7EB'; btn.style.color = '#6B7280';
                     if(i===4) { btn.style.backgroundColor = '#FAF5FF'; btn.style.borderColor = '#E9D5FF'; btn.style.color = '#7E22CE'; }
                     if(i===5) { btn.style.backgroundColor = '#FEFCE8'; btn.style.borderColor = '#FEF08A'; btn.style.color = '#A16207'; }
-                    
                     content.classList.remove('active');
                 }
             });
@@ -499,9 +518,9 @@
             const btns = document.querySelectorAll('.conn-btn');
             btns.forEach(btn => {
                 if(btn.innerText.includes(conn)) {
-                    btn.className = "conn-btn px-3 py-1.5 rounded-full text-xs font-bold font-eng bg-purple-500 text-white shadow-md transform scale-105 transition-all";
+                    btn.className = "conn-btn px-4 py-2 rounded-xl text-base font-bold font-eng bg-purple-500 text-white shadow-md transform scale-105 transition-all border-b-4 border-purple-700 active:border-b-0 active:translate-y-1";
                 } else {
-                    btn.className = "conn-btn px-3 py-1.5 rounded-full text-xs font-bold font-eng bg-white text-gray-500 border border-gray-200 hover:bg-gray-50 transition-all";
+                    btn.className = "conn-btn px-4 py-2 rounded-xl text-base font-bold font-eng bg-white text-gray-500 border-2 border-gray-300 hover:bg-gray-50 transition-all";
                 }
             });
             updateL2();
@@ -546,7 +565,7 @@
             sentenceHistory.push(finalSent);
             renderStoryList();
             
-            if(confirm("문장이 저장되었습니다! \n새로운 문장을 만들러 갈까요? (입력창이 비워집니다)")) {
+            if(confirm("문장이 저장되었습니다! \n새로운 문장을 만들러 갈까요?")) {
                 // Clear inputs
                 document.getElementById('l1-what').value = '';
                 document.getElementById('l2-b-who').value = '';
@@ -566,25 +585,28 @@
         function renderStoryList() {
             const listEl = document.getElementById('story-list');
             const aiSection = document.getElementById('ai-section');
+            const actionBtns = document.getElementById('action-buttons');
             const countEl = document.getElementById('story-count');
             
             countEl.innerText = sentenceHistory.length;
             
             if(sentenceHistory.length === 0) {
-                listEl.innerHTML = `<li class="text-center text-gray-400 text-sm py-10 italic">아직 저장된 문장이 없어요.<br>3단계나 4단계에서 '저장하기'를 눌러보세요!</li>`;
+                listEl.innerHTML = `<li class="text-center text-gray-400 text-lg py-16 italic no-print">아직 저장된 문장이 없어요.<br>3단계나 4단계에서 '저장하기'를 눌러보세요!</li>`;
                 aiSection.classList.add('hidden');
+                actionBtns.classList.add('hidden');
                 return;
             }
 
             aiSection.classList.remove('hidden');
+            actionBtns.classList.remove('hidden');
             listEl.innerHTML = '';
             
             sentenceHistory.forEach((sent, idx) => {
                 const li = document.createElement('li');
-                li.className = "bg-gray-50 p-3 rounded-xl border border-gray-200 text-gray-700 font-eng flex justify-between items-center group";
+                li.className = "story-item bg-gray-50 p-5 rounded-2xl border-2 border-gray-200 text-gray-800 font-eng flex justify-between items-center group text-2xl shadow-sm";
                 li.innerHTML = `
                     <span>${idx + 1}. ${sent}</span>
-                    <button onclick="removeSentence(${idx})" class="text-red-400 opacity-0 group-hover:opacity-100 hover:text-red-600 transition">
+                    <button onclick="removeSentence(${idx})" class="no-print text-red-400 opacity-50 group-hover:opacity-100 hover:text-red-600 transition p-2">
                         <i class="fa-solid fa-trash-can"></i>
                     </button>
                 `;
@@ -603,11 +625,20 @@
             aiBox.classList.remove('hidden');
             aiText.innerText = "AI 선생님이 생각 중이에요...";
             
-            // Simulate AI
             setTimeout(() => {
                 let story = sentenceHistory.join(' ');
-                story = "Here is your polished story:\n\n" + story + "\n\n(Great job using complex sentences!)";
-                aiText.innerText = story;
+                story = "Here is your polished story:\n\n\"" + story + "\"\n\n(Great job using complex sentences! Keep it up!)";
+                
+                aiText.innerText = "";
+                let i = 0;
+                function typeWriter() {
+                    if (i < story.length) {
+                        aiText.innerText += story.charAt(i);
+                        i++;
+                        setTimeout(typeWriter, 30);
+                    }
+                }
+                typeWriter();
             }, 1500);
         }
 
@@ -616,15 +647,64 @@
                 .then(() => alert("복사되었습니다!"));
         }
 
+        // --- 인쇄 기능 ---
+        function printPage() {
+            window.print();
+        }
+
+        // --- 파일 저장 기능 ---
+        function downloadTxt() {
+            const text = sentenceHistory.join('\n');
+            const blob = new Blob([text], { type: "text/plain" });
+            const anchor = document.createElement("a");
+            anchor.download = "My_English_Story.txt";
+            anchor.href = window.URL.createObjectURL(blob);
+            anchor.target = "_blank";
+            anchor.style.display = "none";
+            document.body.appendChild(anchor);
+            anchor.click();
+            document.body.removeChild(anchor);
+        }
+
+        // --- 소리 듣기 (즉각 반응 버전) ---
         function speakText(text) {
             if(!text || text.includes('...')) { alert("문장을 완성해주세요!"); return; }
+            if (!window.speechSynthesis) { alert("소리를 들을 수 없는 환경입니다."); return; }
+
+            // 1. 기존 소리 즉시 중단
             window.speechSynthesis.cancel();
+            
+            // 2. 발화 객체 생성
             const msg = new SpeechSynthesisUtterance(text);
-            msg.lang = 'en-US'; msg.rate = 0.9; window.speechSynthesis.speak(msg);
+            msg.lang = 'en-US'; 
+            msg.rate = 0.9;
+            
+            // 3. 미리 찾아둔 목소리(englishVoice)가 있으면 바로 적용
+            // (없으면 브라우저 기본값 사용)
+            if(englishVoice) {
+                msg.voice = englishVoice;
+            } else if (voices.length > 0) {
+                // 혹시 englishVoice가 null이면 다시 찾기
+                const retryVoice = voices.find(v => v.lang.includes('en') || v.name.includes('English'));
+                if (retryVoice) msg.voice = retryVoice;
+            }
+
+            // 4. 재생
+            window.speechSynthesis.speak(msg);
+
+            // 아이콘 애니메이션
+            let iconId = "";
+            if(document.getElementById('tab-1').classList.contains('active')) iconId = "icon-vol-1";
+            else if(document.getElementById('tab-2').classList.contains('active')) iconId = "icon-vol-2";
+            
+            if(iconId) {
+                const icon = document.getElementById(iconId);
+                icon.classList.add('speaking-icon');
+                msg.onend = function() { icon.classList.remove('speaking-icon'); };
+            }
         }
         function speakL1() { speakText(document.getElementById('l1-result').innerText); }
         function speakL2() { speakText(document.getElementById('l2-result').innerText); }
-        function speakL3() { speakText(document.getElementById('l3-result').innerText); }
         
         function resetAll() {
             if(confirm("모든 내용을 초기화할까요?")) location.reload();

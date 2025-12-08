@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>매스 연대기: 잃어버린 수의 기억</title>
+    <style>
+        /* [스타일: Artscape - 신비로운 고대 기록 보관소] */
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(to right, #24243e, #302b63, #0f0c29);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #app-frame {
+            width: 400px;
+            height: 750px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid #ffd700;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 공통 UI */
+        .screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: opacity 0.5s;
+            background-image: url('https://www.transparenttextures.com/patterns/stardust.png');
+        }
+        .hidden { display: none; opacity: 0; }
+
+        h1 { color: #ffd700; font-size: 28px; text-shadow: 2px 2px 4px #000; margin-bottom: 5px; }
+        .subtitle { font-size: 14px; color: #aaa; margin-bottom: 30px; font-style: italic; }
+
+        /* 로비 버튼 */
+        .chapter-btn {
+            width: 90%;
+            padding: 18px;
+            margin: 10px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #666;
+            color: #ccc;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            transition: 0.3s;
+        }
+        .chapter-btn.unlocked {
+            border-color: #ffd700;
+            color: #ffd700;
+            background: rgba(255, 215, 0, 0.1);
+        }
+        .chapter-btn.locked { opacity: 0.6; cursor: not-allowed; }
+        .chapter-btn small { display: block; font-size: 12px; color: #aaa; margin-top: 5px; }
+
+        /* 게임 화면 요소 */
+        .story-box {
+            background: rgba(0,0,0,0.5);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 3px solid #ffd700;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+        .problem-area {
+            text-align: center;
+            font-size: 20px;
+            margin: 20px 0;
+            font-weight: bold;
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+        }
+        input {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid #ffd700;
+            color: white;
+            font-size: 24px;
+            width: 80px;
+            text-align: center;
+            margin-top: 10px;
+        }
+        input:focus { outline: none; }
+
+        /* 기능 버튼들 */
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        .func-btn {
+            padding: 8px 12px;
+            font-size: 12px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            background: #4a4a4a;
+            color: white;
+        }
+        .btn-hint { background: #e67e22; }
+        .btn-video { background: #e74c3c; }
+        .btn-submit { 
+            margin-top: 20px; padding: 12px 40px; 
+            background: #ffd700; color: #000; font-weight: bold; font-size: 16px; 
+            border-radius: 25px; border: none; cursor: pointer;
+        }
+        .btn-submit:hover { transform: scale(1.05); }
+
+        #hint-box {
+            margin-top: 15px;
+            padding: 10px;
+            background: #fff3cd;
+            color: #856404;
+            border-radius: 5px;
+            font-size: 13px;
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        /* 팝업 모달 */
+        .modal {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 100;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            width: 90%;
+            background: #222;
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .close-modal {
+            margin-top: 15px;
+            padding: 8px 20px;
+            background: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div id="app-frame">
+    
+    <div id="lobby" class="screen">
+        <h1>📜 매스 연대기</h1>
+        <div class="subtitle">Math Chronicles: 잃어버린 수의 기억</div>
+        
+        <button class="chapter-btn unlocked" onclick="startGame(0)">
+            <strong>서막: 태초의 조각</strong>
+            <small>Lv.0 기초 | 소인수분해와 수의 본질</small>
+        </button>
+        <button class="chapter-btn locked" id="btn-lv1" onclick="startGame(1)">
+            <strong>제 1장: 균형의 시대 🔒</strong>
+            <small>Lv.1 중1 | 일차방정식과 등식</small>
+        </button>
+        <button class="chapter-btn locked" id="btn-lv2" onclick="startGame(2)">
+            <strong>제 2장: 변화의 언덕 🔒</strong>
+            <small>Lv.2 중2 | 일차함수와 기울기</small>
+        </button>
+        <button class="chapter-btn locked" id="btn-lv3" onclick="startGame(3)">
+            <strong>제 3장: 진리의 탑 🔒</strong>
+            <small>Lv.3 중3 | 피타고라스와 무리수</small>
+        </button>
+    </div>
+
+    <div id="game" class="screen hidden">
+        <h2 id="stage-title" style="color:#ffd700; margin-top:0;">Chapter Title</h2>
+        <div class="story-box" id="stage-story">Story...</div>
+
+        <div class="problem-area">
+            <div id="stage-problem">Problem...</div>
+            <input type="number" id="user-answer" placeholder="?">
+        </div>
+
+        <div class="btn-group">
+            <button class="func-btn btn-hint" onclick="toggleHint()">💡 힌트 보기</button>
+            <button class="func-btn btn-video" onclick="openVideo()">📺 개념 영상</button>
+        </div>
+
+        <div id="hint-box">힌트 내용</div>
+
+        <button class="btn-submit" onclick="checkAnswer()">운명 확인 (정답)</button>
+        <button class="func-btn" style="margin-top: 20px; background:transparent; border:1px solid #666;" onclick="goLobby()">로비로 돌아가기</button>
+    </div>
+
+    <div id="video-modal" class="modal">
+        <div class="modal-content">
+            <h3 style="color:white; margin-bottom:10px;">개념 설명</h3>
+            <iframe id="youtube-frame" width="100%" height="200" src="" title="Video" frameborder="0" allowfullscreen></iframe>
+            <button class="close-modal" onclick="closeVideo()">닫기</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // [데이터베이스: 각 단계별 5문제씩 탑재 완료]
+    const chronicles = [
+        {
+            level: 0,
+            title: "서막: 태초의 조각",
+            story: "세상의 모든 수는 작은 원소들의 결합입니다. 흩어진 수들을 소인수분해로 다시 결합해주세요.",
+            videoId: "zWlXqF_TmeE",
+            quizBank: [
+                { q: "12 = 2² × □", a: 3, h: "12를 4로 나누면 무엇이 남나요?" },
+                { q: "18 = 2 × □²", a: 3, h: "18을 2로 나누면 9입니다. 9는 무엇의 제곱일까요?" },
+                { q: "20 = 2² × □", a: 5, h: "20을 4로 나누면 무엇인가요?" },
+                { q: "45 = 3² × □", a: 5, h: "3의 제곱은 9입니다. 45 나누기 9는?" },
+                { q: "50 = 2 × □²", a: 5, h: "50 나누기 2는 25입니다. 25는 어떤 수의 제곱일까요?" }
+            ]
+        },
+        {
+            level: 1,
+            title: "제 1장: 균형의 시대",
+            story: "평화롭던 시대에 균형이 깨졌습니다. 저울(등호)의 수평을 맞추기 위해 미지수 x를 찾아야 합니다.",
+            videoId: "9c3j8Cg63kE",
+            quizBank: [
+                { q: "3x + 4 = 19<br>x의 값은?", a: 5, h: "양변에서 4를 먼저 빼보세요. 3x = 15" },
+                { q: "2x - 5 = 5<br>x의 값은?", a: 5, h: "-5를 없애려면 양변에 5를 더하세요." },
+                { q: "4x = 20<br>x의 값은?", a: 5, h: "20을 4로 나누면 x가 나옵니다." },
+                { q: "5x + 2 = 12<br>x의 값은?", a: 2, h: "12에서 2를 빼면 10입니다. 5x=10" },
+                { q: "2x + 3 = 11<br>x의 값은?", a: 4, h: "11에서 3을 빼면 8입니다. 2x=8" }
+            ]
+        },
+        {
+            level: 2,
+            title: "제 2장: 변화의 언덕",
+            story: "변수들이 서로 영향을 주기 시작했습니다. 입력(x)이 변할 때 출력(y)이 어떻게 변하는지 규칙을 찾으세요.",
+            videoId: "PjJ2_WJ9QfE",
+            quizBank: [
+                { q: "y = 2x + 1<br>x가 3일 때, y는?", a: 7, h: "x 자리에 3을 넣으세요. (2×3)+1" },
+                { q: "y = 3x - 2<br>x가 2일 때, y는?", a: 4, h: "(3×2) - 2를 계산해보세요." },
+                { q: "일차함수 y = ax + 3 이<br>(1, 5)를 지날 때 a는?", a: 2, h: "y에 5, x에 1을 넣으세요. 5 = a + 3" },
+                { q: "y = -x + 10<br>x가 3일 때, y는?", a: 7, h: "10에서 3을 빼보세요." },
+                { q: "두 점 (1,1), (2,3)을 지나는<br>직선의 기울기는?", a: 2, h: "y의 증가량(3-1) 나누기 x의 증가량(2-1)" }
+            ]
+        },
+        {
+            level: 3,
+            title: "제 3장: 진리의 탑",
+            story: "변하지 않는 진리를 찾아야 합니다. 피타고라스의 힘을 빌려 무리수의 비밀을 밝히세요.",
+            videoId: "A9GjPj8P_34",
+            quizBank: [
+                { q: "밑변 3, 높이 4인 직각삼각형<br>빗변의 길이는?", a: 5, h: "3² + 4² = □² (9+16=25)" },
+                { q: "밑변 6, 높이 8인 직각삼각형<br>빗변의 길이는?", a: 10, h: "6² + 8² = 100 입니다." },
+                { q: "√16 + √9 의 값은?", a: 7, h: "루트 16은 4, 루트 9는 3입니다." },
+                { q: "밑변 5, 높이 12인 직각삼각형<br>빗변의 길이는?", a: 13, h: "5²(25) + 12²(144) = 169" },
+                { q: "√25 - √4 의 값은?", a: 3, h: "5 빼기 2를 계산하세요." }
+            ]
+        }
+    ];
+
+    let currentStage = 0;
+    let unlockedStage = 0;
+    let currentQuiz = null;
+
+    function startGame(idx) {
+        if (idx > unlockedStage) {
+            alert("이전 시대의 역사를 먼저 완성해야 합니다!");
+            return;
+        }
+        currentStage = idx;
+        const data = chronicles[idx];
+
+        document.getElementById('lobby').classList.add('hidden');
+        document.getElementById('game').classList.remove('hidden');
+
+        // [핵심] 랜덤 문제 출제
+        const randomIndex = Math.floor(Math.random() * data.quizBank.length);
+        currentQuiz = data.quizBank[randomIndex];
+
+        document.getElementById('stage-title').innerText = data.title;
+        document.getElementById('stage-story').innerText = data.story;
+        document.getElementById('stage-problem').innerHTML = currentQuiz.q;
+        document.getElementById('user-answer').value = "";
+        
+        document.getElementById('hint-box').style.display = 'none';
+        document.getElementById('hint-box').innerText = currentQuiz.h;
+    }
+
+    function checkAnswer() {
+        const userVal = parseInt(document.getElementById('user-answer').value);
+        
+        if (userVal === currentQuiz.a) {
+            alert(`[정답입니다!] \n\n역사의 한 페이지가 복구되었습니다.\n"${chronicles[currentStage].title}" 클리어!`);
+            
+            if (currentStage === unlockedStage && currentStage < 3) {
+                unlockedStage++;
+                updateLobby();
+            }
+            goLobby();
+        } else {
+            alert("틀렸습니다. 다시 계산해보거나 힌트를 확인하세요!");
+        }
+    }
+
+    function toggleHint() {
+        const box = document.getElementById('hint-box');
+        box.style.display = (box.style.display === 'block') ? 'none' : 'block';
+    }
+
+    function openVideo() {
+        const data = chronicles[currentStage];
+        const modal = document.getElementById('video-modal');
+        const iframe = document.getElementById('youtube-frame');
+        iframe.src = `https://www.youtube.com/embed/${data.videoId}`;
+        modal.style.display = 'flex';
+    }
+
+    function closeVideo() {
+        const modal = document.getElementById('video-modal');
+        const iframe = document.getElementById('youtube-frame');
+        iframe.src = "";
+        modal.style.display = 'none';
+    }
+
+    function updateLobby() {
+        for(let i=1; i<=3; i++) {
+            const btn = document.getElementById(`btn-lv${i}`);
+            if (i <= unlockedStage) {
+                btn.classList.remove('locked');
+                btn.classList.add('unlocked');
+                btn.innerHTML = btn.innerHTML.replace('🔒', '');
+            }
+        }
+    }
+
+    function goLobby() {
+        document.getElementById('game').classList.add('hidden');
+        document.getElementById('lobby').classList.remove('hidden');
+    }
+</script>
+
+</body>
+</html>
