@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Log</title>
+    <style>
+        /* 안전모드 스타일: 인터넷 연결 없이 작동 */
+        body { font-family: 'Malgun Gothic', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; border: 1px solid #ccc; }
+        h1 { text-align: center; border-bottom: 2px solid #333; padding-bottom: 15px; }
+        h2 { background: #e3f2fd; padding: 10px; border-radius: 5px; color: #1565c0; margin-top: 30px; font-size: 18px; }
+        
+        /* 페이지 제어 */
+        .page { display: none; }
+        .page.active { display: block; }
+        
+        /* 입력창 */
+        label { display: block; font-weight: bold; margin-top: 15px; }
+        input, textarea { width: 100%; padding: 10px; border: 1px solid #aaa; border-radius: 5px; box-sizing: border-box; font-size: 14px; }
+        textarea { height: 80px; resize: vertical; }
+        
+        /* 버튼 디자인 */
+        .btn-select { padding: 8px 15px; background: white; border: 1px solid #999; border-radius: 20px; cursor: pointer; margin: 3px; }
+        .btn-select:hover { background: #eee; }
+        .btn-select.selected { background: #2196F3 !important; color: white !important; font-weight: bold; border-color: #2196F3 !important; }
+
+        .color-item { display: inline-block; text-align: center; margin: 5px; cursor: pointer; }
+        .color-circle { width: 35px; height: 35px; border-radius: 50%; border: 2px solid #ddd; margin-bottom: 3px; }
+        .color-item.selected .color-circle { border: 3px solid #333; transform: scale(1.1); }
+        .color-name { font-size: 12px; display: block; }
+
+        .nav-btns { margin-top: 30px; text-align: right; border-top: 1px solid #eee; padding-top: 20px; }
+        .btn-move { padding: 10px 20px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; color: white; }
+        .prev { background: #999; float: left; }
+        .next { background: #2196F3; }
+        .ai-btn { width: 100%; background: #673AB7; margin-top: 20px; padding: 15px; font-size: 18px; }
+
+        /* 인쇄 설정 */
+        @media print { .btn-move, .nav-btns { display: none; } body { padding: 0; } .container { border: none; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🎵 나의 음악 감상 기록</h1>
+
+    <div id="page1" class="page active">
+        <div style="background:#eee; padding:10px; border-radius:5px; display:flex; gap:5px; margin-bottom:20px;">
+            <input type="text" id="grade" placeholder="학년" style="width:50px; text-align:center;">
+            <input type="text" id="cls" placeholder="반" style="width:50px; text-align:center;">
+            <input type="text" id="num" placeholder="번호" style="width:50px; text-align:center;">
+            <input type="text" id="name" placeholder="이름" style="flex-grow:1;">
+        </div>
+
+        <h2>Step 1. 만남과 준비</h2>
+        <label>곡 제목</label> <input type="text" id="title">
+        <label>작곡가</label> <input type="text" id="composer">
+        <label>배경 지식</label> <textarea id="bg_info" placeholder="곡에 대해 알고 있는 점"></textarea>
+
+        <hr>
+        <label>1. 감상 전 기분 (클릭)</label>
+        <div id="pre_em_box">
+            <button class="btn-select" onclick="sel(this, 'pre_em')">피곤한</button>
+            <button class="btn-select" onclick="sel(this, 'pre_em')">신나는</button>
+            <button class="btn-select" onclick="sel(this, 'pre_em')">평온한</button>
+            <button class="btn-select" onclick="sel(this, 'pre_em')">배고픈</button>
+            <button class="btn-select" onclick="sel(this, 'pre_em')">짜증난</button>
+            <button class="btn-select" onclick="sel(this, 'pre_em')">설레는</button>
+            <button class="btn-select" onclick="sel(this, 'pre_em')">우울한</button>
+            <button class="btn-select" onclick="sel(this, 'pre_em')">심심한</button>
+            <button class="btn-select" onclick="sel(this, 'pre_em')">긴장된</button>
+            <button class="btn-select" onclick="sel(this, 'pre_em')">행복한</button>
+        </div>
+
+        <label>2. 감상 전 마음 색깔 (클릭)</label>
+        <div id="pre_co_box">
+            </div>
+
+        <div class="nav-btns">
+            <button class="btn-move next" onclick="showPage(2)">다음 ➜</button>
+        </div>
+    </div>
+
+    <div id="page2" class="page">
+        <h2>Step 2. 귀로 듣는 탐험</h2>
+        <label>1. 악기 소리</label> <input type="text" id="q_inst">
+        <label>2. 속도와 리듬</label> <input type="text" id="q

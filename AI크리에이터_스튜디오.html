@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>링프 주니어 AI 스튜디오</title>
+    <style>
+        /* 아이들이 좋아할 만한 밝고 직관적인 디자인 */
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .studio-container {
+            background-color: white;
+            width: 90%;
+            max-width: 700px;
+            padding: 40px;
+            border-radius: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border: 5px solid #FFD93D; /* 노란색 테두리로 활기찬 느낌 */
+        }
+
+        h1 {
+            text-align: center;
+            color: #4834d4;
+            margin-bottom: 10px;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        /* 탭 버튼 */
+        .mode-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            font-size: 18px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            background-color: #eee;
+            color: #aaa;
+        }
+
+        .tab-btn.active {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .tab-music.active { background-color: #6C5CE7; color: white; }
+        .tab-image.active { background-color: #00CEC9; color: white; }
+
+        /* 입력 섹션 */
+        .control-group {
+            margin-bottom: 20px;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2d3436;
+        }
+
+        select, input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        select:focus, input:focus {
+            border-color: #6C5CE7;
+        }
+
+        /* 번역 버튼 */
+        .magic-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #FF9F43, #FF6B6B);
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: transform 0.2s;
+        }
+
+        .magic-btn:hover {
+            transform: scale(1.02);
+        }
+
+        /* 결과창 */
+        .output-box {
+            margin-top: 30px;
+            background-color: #2d3436;
+            color: #00CEC9;
+            padding: 20px;
+            border-radius: 15px;
+            font-family: monospace;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .output-box h3 {
+            color: #fff;
+            margin-top: 0;
+            font-size: 14px;
+            border-bottom: 1px solid #555;
+            padding-bottom: 5px;
+        }
+
+        textarea.final-prompt {
+            width: 100%;
+            height: 100px;
+            background: transparent;
+            border: none;
+            color: #ffeaa7;
+            font-size: 16px;
+            resize: none;
+            outline: none;
+        }
+
+        .tip {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="studio-container">
+    <h1>🎨 링프 주니어 창작소 🎵</h1>
+    <p class="subtitle">한글로 상상하고 영어로 만들어요!</p>
+
+    <div class="mode-tabs">
+        <button class="tab-btn tab-music active" onclick="setMode('music')">🎵 노래 만들기</button>
+        <button class="tab-btn tab-image" onclick="setMode('image')">🖼️ 그림 그리기</button>
+    </div>
+
+    <div class="control-group">
+        <label>1. 스타일을 골라보세요 (장르)</label>
+        <select id="genreSelect">
+            </select>
+    </div>
+
+    <div class="control-group">
+        <label>2. 분위기는 어떤가요?</label>
+        <select id="moodSelect">
+            </select>
+    </div>
+
+    <div class="control-group">
+        <label>3. 무엇을 표현하고 싶나요? (한글 단어로 써보세요)</label>
+        <input type="text" id="userTopic" placeholder="예: 학교, 친구, 꿈, 고양이, 우주여행">
+        <div class="tip">💡 팁: '학교 친구'처럼 띄어쓰기로 단어를 나열하면 번역이 더 잘 돼요!</div>
+    </div>
+
+    <button class="magic-btn" onclick="translateAndGenerate()">✨ 영어 주문서(프롬프트) 만들기!</button>
+
+    <div class="output-box" id="resultArea" style="display:none;">
+        <h3>AI에게 복사해서 붙여넣으세요 👇 (직접 수정 가능해요)</h3>
+        <textarea class="final-prompt" id="finalOutput"></textarea>
+    </div>
+</div>
+
+<script>
+    // --- 1. 단어장 (한글 -> 영어 매핑 데이터) ---
+    // 아이들이 자주 쓸만한 단어들을 이곳에 등록합니다.
+    const dictionary = {
+        "학교": "School", "친구": "Friend", "우정": "Friendship", "사랑": "Love",
+        "꿈": "Dream", "희망": "Hope", "도전": "Challenge", "미래": "Future",
+        "가족": "Family", "엄마": "Mom", "아빠": "Dad", "선생님": "Teacher",
+        "고양이": "Cat", "강아지": "Dog", "로봇": "Robot", "우주": "Space",
+        "바다": "Ocean", "하늘": "Sky", "꽃": "Flower", "비": "Rain",
+        "눈": "Snow", "봄": "Spring", "여름": "Summer", "가을": "Autumn", "겨울": "Winter",
+        "뮤지컬": "Musical", "무대": "Stage", "축제": "Festival", "졸업": "Graduation",
+        "슬픔": "Sadness", "기쁨": "Joy", "화남": "Anger", "행복": "Happiness"
+    };
+
+    // --- 2. 장르 및 분위기 프리셋 (영어 값 내장) ---
+    const presets = {
+        music: {
+            genres: [
+                { label: "선택 안 함", value: "Pop" },
+                { label: "신나는 케이팝 (K-Pop)", value: "Upbeat K-Pop, Idol style" },
+                { label: "감동적인 뮤지컬 (Musical)", value: "Musical Theatre, Orchestral, Broadway style" },
+                { label: "잔잔한 피아노 (Piano)", value: "Solo Piano, Emotional, Classical" },
+                { label: "웅장한 영화음악 (Cinematic)", value: "Cinematic Score, Epic, Hans Zimmer style" },
+                { label: "힙합/랩 (Hip-hop)", value: "Hip-hop, Beat, Groovy" }
+            ],
+            moods: [
+                { label: "희망찬", value: "Hopeful, Uplifting" },
+                { label: "슬픈/아련한", value: "Sad, Sentimental, Melancholic" },
+                { label: "긴장감 넘치는", value: "Dramatic, Tense" },
+                { label: "편안한", value: "Relaxing, Chill" }
+            ]
+        },
+        image: {
+            genres: [
+                { label: "선택 안 함", value: "Digital Art" },
+                { label: "디즈니/픽사 스타일 (3D Ani)", value: "Disney Pixar style, 3D render, cute" },
+                { label: "지브리 애니메이션 (Anime)", value: "Studio Ghibli style, Anime, detailed background" },
+                { label: "수채화 그림 (Watercolor)", value: "Watercolor painting, soft edges, artistic" },
+                { label: "진짜 같은 사진 (Photo)", value: "Photorealistic, 8k, Cinematic lighting" },
+                { label: "사이버펑크 (Cyberpunk)", value: "Cyberpunk, Neon lights, Futuristic" }
+            ],
+            moods: [
+                { label: "따뜻한 햇살", value: "Warm lighting, Sunny, Bright" },
+                { label: "신비로운 밤", value: "Mysterious, Night time, Glowing" },
+                { label: "동화 같은", value: "Fantasy, Magical, Dreamy" },
+                { label: "차가운/도시적인", value: "Cool tones, Urban, Modern" }
+            ]
+        }
+    };
+
+    let currentMode = 'music';
+
+    // 초기화
+    window.onload = function() {
+        updateOptions();
+    };
+
+    function setMode(mode) {
+        currentMode = mode;
+        // 탭 스타일 변경
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`.tab-${mode}`).classList.add('active');
+        
+        // 옵션 목록 업데이트
+        updateOptions();
+    }
+
+    function updateOptions() {
+        const genreSelect = document.getElementById('genreSelect');
+        const moodSelect = document.getElementById('moodSelect');
+        
+        // 기존 옵션 비우기
+        genreSelect.innerHTML = "";
+        moodSelect.innerHTML = "";
+
+        // 새 옵션 채우기
+        presets[currentMode].genres.forEach(g => {
+            let option = document.createElement("option");
+            option.text = g.label;
+            option.value = g.value;
+            genreSelect.add(option);
+        });
+
+        presets[currentMode].moods.forEach(m => {
+            let option = document.createElement("option");
+            option.text = m.label;
+            option.value = m.value;
+            moodSelect.add(option);
+        });
+    }
+
+    // --- 3. 핵심 기능: 번역 및 프롬프트 조합 ---
+    function translateAndGenerate() {
+        const genre = document.getElementById('genreSelect').value;
+        const mood = document.getElementById('moodSelect').value;
+        let topicKR = document.getElementById('userTopic').value;
+        
+        // 간단 번역 로직 (단어장 매칭)
+        let topicEN = topicKR.split(' ').map(word => {
+            // 단어장에서 찾거나, 없으면 원래 단어 그대로 씀
+            return dictionary[word] || dictionary[word.trim()] || word; 
+        }).join(' ');
+
+        let finalPrompt = "";
+
+        if (currentMode === 'music') {
+            // 음악 프롬프트 구조
+            finalPrompt = `[Genre: ${genre}]\n[Mood: ${mood}]\n[Topic: ${topicEN}]\n(High Quality Audio, Creative arrangement)`;
+        } else {
+            // 그림 프롬프트 구조
+            finalPrompt = `/imagine prompt: ${topicEN}, ${genre}, ${mood}, high quality, detailed --ar 16:9`;
+        }
+
+        // 결과 보여주기
+        document.getElementById('resultArea').style.display = 'block';
+        document.getElementById('finalOutput').value = finalPrompt;
+    }
+</script>
+
+</body>
+</html>

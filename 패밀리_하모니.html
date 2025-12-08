@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>패밀리 하모니 7.0 - Deep Essay</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary: #6C5CE7; --secondary: #a29bfe;
+            --accent: #00b894; --bg: #dfe6e9;
+            --muto-skin: #ffeaa7;
+        }
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: var(--bg); margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .container {
+            background: white; max-width: 700px; width: 100%;
+            padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        h1 { color: var(--primary); margin: 0 0 10px 0; }
+        
+        .step { display: none; animation: fadeIn 0.5s; }
+        .step.active { display: block; }
+
+        /* 탭 스타일 */
+        .selection-area { margin-bottom: 20px; text-align: left; }
+        .tab-label { font-weight: bold; color: #555; display: block; margin-bottom: 5px; font-size: 0.9rem; }
+        .tab-group { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
+        .tab-btn {
+            padding: 8px 12px; border: 1px solid #ccc; border-radius: 20px;
+            background: white; cursor: pointer; transition: 0.2s; font-size: 0.85rem;
+        }
+        .tab-btn:hover { background: #eee; }
+        .tab-btn.selected {
+            background: var(--primary); color: white; border-color: var(--primary);
+            box-shadow: 0 3px 10px rgba(108, 92, 231, 0.3); font-weight: bold;
+        }
+
+        /* 뮤토 스테이지 */
+        .muto-stage {
+            background: #f1f2f6; border-radius: 20px; padding: 20px;
+            text-align: center; margin-bottom: 20px; border: 3px solid #eee;
+            position: relative; overflow: hidden; height: 180px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .muto-face {
+            width: 90px; height: 90px;
+            background-color: var(--muto-skin); border-radius: 50%; border: 4px solid #333;
+            position: relative; display: flex; align-items: center; justify-content: center;
+            font-size: 45px; transition: all 0.3s ease; z-index: 2;
+        }
+        .muto-ear {
+            position: absolute; top: -15px; width: 25px; height: 40px;
+            background-color: var(--muto-skin); border: 4px solid #333;
+            border-bottom: none; border-radius: 20px 20px 0 0; z-index: 1;
+        }
+        .ear-left { left: 10px; transform: rotate(-10deg); }
+        .ear-right { right: 10px; transform: rotate(10deg); }
+
+        .muto-label {
+            margin-top: 15px; font-weight: bold; color: #555; background: white;
+            padding: 8px 15px; border-radius: 15px; border: 1px solid #ddd; font-size: 0.9rem;
+            width: 90%;
+        }
+
+        /* 입력창 & 버튼 */
+        input, textarea {
+            width: 100%; padding: 12px; border: 1px solid #bdc3c7; border-radius: 8px;
+            margin-bottom: 10px; font-size: 1rem; box-sizing: border-box; font-family: inherit;
+        }
+        button {
+            background: var(--primary); color: white; border: none; padding: 12px 20px;
+            border-radius: 30px; font-size: 1rem; font-weight: bold; cursor: pointer;
+            transition: 0.2s; margin-top: 10px;
+        }
+        button:hover { transform: scale(1.05); }
+        .btn-gray { background: #b2bec3; }
+        .btn-green { background: var(--accent); }
+        .btn-print { background: #2d3436; width: 100%; margin-top: 5px; }
+
+        /* 보고서 스타일 */
+        .report-paper { border: 1px solid #ddd; padding: 40px; margin-top: 20px; border-radius: 5px; text-align: left; background: white; }
+        .report-section { margin-bottom: 25px; border-bottom: 1px dashed #eee; padding-bottom: 20px; }
+        .report-title { font-size: 1.2rem; font-weight: bold; color: var(--primary); margin-bottom: 15px; border-left: 5px solid var(--primary); padding-left: 10px; }
+
+        /* 질문 박스 스타일 (Step 3) */
+        .q-container {
+            max-height: 400px; overflow-y: auto; padding-right: 5px; /* 스크롤바 공간 */
+        }
+        .q-card {
+            background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 4px solid var(--accent);
+            text-align: left;
+        }
+        .q-text { font-weight: bold; font-size: 0.95rem; display: block; margin-bottom: 8px; color: #2d3436; }
+        .q-sub { font-size: 0.8rem; color: #636e72; margin-bottom: 5px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        @media print {
+            body * { visibility: hidden; }
+            #finalReport, #finalReport * { visibility: visible; }
+            #finalReport { position: absolute; left: 0; top: 0; width: 100%; border: none; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header class="no-print">
+        <h1>Family Harmony 7.0</h1>
+        <p>Deep Essay Edition: 깊이 있는 성찰 글쓰기</p>
+    </header>
+
+    <div id="step1" class="step active">
+        <h2>STEP 1. 갈등 조각 모으기 (Artscape)</h2>
+        <p>상황을 선택하면 에세이의 서론이 완성됩니다.</p>
+
+        <div class="selection-area">
+            <span class="tab-label">1. 누가? (Who)</span>
+            <div class="tab-group" id="whoGroup">
+                <button class="tab-btn" onclick="selectTab('who', '엄마', this)">👩 엄마</button>
+                <button class="tab-btn" onclick="selectTab('who', '아빠', this)">👨 아빠</button>
+                <button class="tab-btn" onclick="selectTab('who', '동생', this)">👦 동생</button>
+                <button class="tab-btn" onclick="selectTab('who', '가족', this)">👨‍👩‍👧‍👦 가족</button>
+            </div>
+
+            <span class="tab-label" style="color:#e17055;">2. 무엇 때문에? (Why)</span>
+            <div class="tab-group" id="whyGroup">
+                <button class="tab-btn" onclick="selectTab('why', '스마트폰/게임', this)">📱 스마트폰/게임</button>
+                <button class="tab-btn" onclick="selectTab('why', '성적/공부', this)">📚 성적/공부</button>
+                <button class="tab-btn" onclick="selectTab('why', '청소/정리', this)">🧹 청소/정리</button>
+                <button class="tab-btn" onclick="selectTab('why', '말투/태도', this)">💬 말투/태도</button>
+                <button class="tab-btn" onclick="selectTab('why', '귀가시간/약속', this)">⏰ 시간/약속</button>
+            </div>
+
+            <span class="tab-label" style="color:#d63031;">3. 어떤 행동을? (Action)</span>
+            <div class="tab-group" id="actGroup">
+                <button class="tab-btn" onclick="selectTab('act', '혼내셔서', this)">😡 혼내셔서</button>
+                <button class="tab-btn" onclick="selectTab('act', '잔소리하셔서', this)">🗣️ 잔소리하셔서</button>
+                <button class="tab-btn" onclick="selectTab('act', '무시하셔서', this)">🔇 무시하셔서</button>
+                <button class="tab-btn" onclick="selectTab('act', '비교하셔서', this)">⚖️ 비교하셔서</button>
+                <button class="tab-btn" onclick="selectTab('act', '다투어서', this)">⚔️ 다투어서</button>
+            </div>
+
+            <span class="tab-label">4. 그때 기분은? (Mood)</span>
+            <div class="tab-group" id="moodGroup">
+                <button class="tab-btn" onclick="selectTab('mood', '화남', this)">😡 화남</button>
+                <button class="tab-btn" onclick="selectTab('mood', '억울함', this)">😤 억울함</button>
+                <button class="tab-btn" onclick="selectTab('mood', '슬픔', this)">😢 슬픔</button>
+                <button class="tab-btn" onclick="selectTab('mood', '답답함', this)">😫 답답함</button>
+            </div>
+        </div>
+
+        <div class="muto-stage">
+            <div class="muto-ear ear-left" id="mutoEarL"></div>
+            <div class="muto-ear ear-right" id="mutoEarR"></div>
+            <div class="muto-face" id="mutoFace">😐</div>
+            <div class="muto-label" id="mutoText">조각을 모두 선택해주세요</div>
+        </div>
+
+        <hr style="border:1px dashed #ddd; margin: 20px 0;">
+
+        <h3>마음 번역기 (가사 만들기)</h3>
+        <label>⚡ 뾰족한 말 (Verse)</label>
+        <input type="text" id="sharpInput" placeholder="예: 아 왜 자꾸 잔소리야!">
+        
+        <label>🌈 동그란 말 (Chorus)</label>
+        <input type="text" id="roundInput" placeholder="예: 저를 믿고 조금만 기다려주세요.">
+
+        <button onclick="aiLyrics()">🎵 가사 생성하기</button>
+    </div>
+
+    <div id="step2" class="step">
+        <h2>STEP 2. 가사 확인</h2>
+        <div style="background:#f8f9fa; padding:10px; border-radius:10px; margin-bottom:10px; font-size:0.9rem;">
+            상황: <span id="displaySituation" style="font-weight:bold;"></span>
+        </div>
+        
+        <label style="font-weight:bold; color:#ff7675;">[Verse]</label>
+        <textarea id="verseArea" style="height:80px;"></textarea>
+
+        <label style="font-weight:bold; color:#00b894;">[Chorus]</label>
+        <textarea id="chorusArea" style="height:80px;"></textarea>
+        
+        <div style="display:flex; gap:10px;">
+            <button class="btn-gray" onclick="goToStep(1)">이전</button>
+            <button class="btn-green" onclick="goToStep(3)">다음: 심층 글쓰기 👉</button>
+        </div>
+    </div>
+
+    <div id="step3" class="step">
+        <h2>STEP 3. 깊이 있는 에세이 쓰기</h2>
+        <p>6가지 질문에 답하면 긴 글이 완성됩니다.</p>
+
+        <div class="q-container">
+            <div class="q-card">
+                <span class="q-text">1. [상황] 어떤 상황에서 갈등이 시작되었나요?</span>
+                <p class="q-sub">(자동 완성된 문장입니다. 필요하면 수정하세요.)</p>
+                <input type="text" id="ans1">
+            </div>
+
+            <div class="q-card">
+                <span class="q-text">2. [계기] 그때 구체적으로 어떤 일이 있었나요?</span>
+                <input type="text" id="ans2" placeholder="예: 제가 게임을 하고 있는데 갑자기 폰을 뺏으셨습니다.">
+            </div>
+
+            <div class="q-card">
+                <span class="q-text">3. [속마음] 그때 나의 솔직한 욕구(바램)는 무엇이었나요?</span>
+                <input type="text" id="ans3" placeholder="예: 공부하느라 힘들어서 딱 10분만 쉬고 싶었습니다.">
+            </div>
+
+            <div class="q-card">
+                <span class="q-text">4. [변화] '나 전달법'으로 말을 바꾸면서 어떤 생각이 들었나요?</span>
+                <input type="text" id="ans4" placeholder="예: 욱하는 마음을 가라앉히고 차분하게 말하려고 노력했습니다.">
+            </div>
+
+            <div class="q-card">
+                <span class="q-text">5. [반응] 내가 부드럽게 말했을 때 상대방의 반응은 어땠나요?</span>
+                <input type="text" id="ans5" placeholder="예: 엄마도 화를 멈추고 제 이야기를 들어주셨습니다.">
+            </div>
+
+            <div class="q-card">
+                <span class="q-text">6. [다짐] 이번 활동을 통해 깨달은 점이나 다짐은?</span>
+                <input type="text" id="ans6" placeholder="예: 감정적으로 대처하기보다 대화로 푸는 것이 중요함을 배웠습니다.">
+            </div>
+        </div>
+
+        <button onclick="combineAnswers()">📝 에세이 초안 생성하기 👉</button>
+    </div>
+
+    <div id="step4" class="step">
+        <h2>STEP 4. 초안 다듬기</h2>
+        <p>문장들이 합쳐졌습니다. 어색한 부분을 수정해 보세요.</p>
+        <textarea id="draftArea" style="height: 300px; line-height:1.6; padding:15px;"></textarea>
+        
+        <div style="display:flex; gap:10px;">
+            <button class="btn-gray" onclick="goToStep(3)">이전</button>
+            <button class="btn-green" onclick="aiTutorCheck()">🤖 AI 선생님 첨삭</button>
+        </div>
+    </div>
+
+    <div id="step5" class="step">
+        <h2>STEP 5. 최종 확인</h2>
+        <div style="border:2px dashed #6C5CE7; padding:15px; background:#f8f9fa; border-radius:10px;">
+            <span style="background:#6C5CE7; color:white; padding:3px 8px; border-radius:10px; font-size:0.8rem;">AI Teacher</span>
+            <p style="font-size:0.9rem; margin-top:5px;">
+                "글의 구성이 매우 탄탄합니다! [상황-원인-감정-변화-결과]가 논리적으로 이어져 있어, 
+                읽는 사람에게 학생의 마음 변화가 잘 전달됩니다. 훌륭해요!"
+            </p>
+        </div>
+        <textarea id="finalEssayArea" style="height: 250px; margin-top:10px;"></textarea>
+
+        <button onclick="finalizeReport()">📄 최종 보고서 발행</button>
+    </div>
+
+    <div id="step6" class="step">
+        <h2>최종 결과물</h2>
+        
+        <div id="finalReport" class="report-paper">
+            <h2 style="text-align:center; border-bottom:2px solid #333; padding-bottom:10px;">EAIM 프로젝트 성찰 보고서</h2>
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <span>과목: 가정</span>
+                <span>학번: ________ 이름: ________</span>
+            </div>
+            
+            <div class="report-section">
+                <div class="report-title">1. 갈등 분석 (Conflict Analysis)</div>
+                <table style="width:100%; font-size:0.9rem; border-collapse:collapse;">
+                    <tr>
+                        <td style="padding:5px;"><strong>• 대상:</strong> <span id="repWho"></span></td>
+                        <td style="padding:5px;"><strong>• 원인:</strong> <span id="repWhy"></span></td>
+                    </tr>
+                    <tr>
+                        <td style="padding:5px;"><strong>• 행동:</strong> <span id="repAct"></span></td>
+                        <td style="padding:5px;"><strong>• 감정:</strong> <span id="repMood"></span></td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="report-section">
+                <div class="report-title">2. 나의 하모니 (Lyrics)</div>
+                <div style="background:#f9f9f9; padding:15px; border-radius:10px;">
+                    <p><strong>[Verse: 갈등의 마음]</strong><br><span id="repVerse" style="white-space: pre-wrap; font-style:italic;"></span></p>
+                    <hr style="border:1px dashed #ddd; margin:10px 0;">
+                    <p><strong>[Chorus: 화해의 마음]</strong><br><span id="repChorus" style="white-space: pre-wrap; color:#00b894; font-weight:bold;"></span></p>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <div class="report-title">3. 성찰 에세이 (Reflection)</div>
+                <p id="repEssay" style="line-height:1.8; text-align:justify; white-space: pre-wrap; font-size:1rem;"></p>
+            </div>
+
+            <div style="text-align:center; margin-top:30px; color:#aaa; font-size:0.8rem;">
+                Family Harmony App - Deep Essay Edition
+            </div>
+        </div>
+
+        <div class="no-print">
+            <button class="btn-print" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button>
+            <button class="btn-print" onclick="saveAsImage()">💾 이미지로 저장</button>
+            <button class="btn-gray" onclick="goToStep(1)" style="margin-top:20px;">처음으로</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    let selWho = "", selWhy = "", selAct = "", selMood = "";
+
+    function goToStep(num) {
+        document.querySelectorAll('.step').forEach(e => e.classList.remove('active'));
+        document.getElementById('step' + num).classList.add('active');
+    }
+
+    function selectTab(type, value, btn) {
+        const group = btn.parentElement;
+        group.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+
+        if (type === 'who') selWho = value;
+        if (type === 'why') selWhy = value;
+        if (type === 'act') selAct = value;
+        if (type === 'mood') {
+            selMood = value;
+            updateMutoFace(value);
+        }
+        updateSceneText();
+    }
+
+    function updateMutoFace(mood) {
+        const face = document.getElementById('mutoFace');
+        const earL = document.getElementById('mutoEarL');
+        const earR = document.getElementById('mutoEarR');
+        face.style.backgroundColor = "#ffeaa7"; earL.style.backgroundColor = "#ffeaa7"; earR.style.backgroundColor = "#ffeaa7";
+        face.style.transform = "scale(1)";
+
+        if (mood === '화남') {
+            face.innerText = "😡"; face.style.backgroundColor = "#ff7675"; earL.style.backgroundColor = "#ff7675"; earR.style.backgroundColor = "#ff7675"; face.style.transform = "scale(1.1)";
+        } else if (mood === '억울함') {
+            face.innerText = "😤"; face.style.backgroundColor = "#fab1a0"; earL.style.backgroundColor = "#fab1a0"; earR.style.backgroundColor = "#fab1a0";
+        } else if (mood === '슬픔') {
+            face.innerText = "😢"; face.style.backgroundColor = "#74b9ff"; earL.style.backgroundColor = "#74b9ff"; earR.style.backgroundColor = "#74b9ff";
+        } else if (mood === '답답함') {
+            face.innerText = "😩"; face.style.backgroundColor = "#b2bec3"; earL.style.backgroundColor = "#b2bec3"; earR.style.backgroundColor = "#b2bec3";
+        }
+    }
+
+    function getJosa(word, type) {
+        const lastChar = word.charCodeAt(word.length - 1);
+        const hasJongseong = (lastChar - 0xAC00) % 28 > 0;
+        if (type === 'iga') return hasJongseong ? '이' : '가';
+        return '';
+    }
+
+    function updateSceneText() {
+        const txt = document.getElementById('mutoText');
+        if(selWho && selWhy && selAct && selMood) {
+            const josa = getJosa(selWho, 'iga'); 
+            txt.innerText = `${selWho}${josa} ${selWhy} 때문에 ${selAct} ${selMood}`;
+            document.getElementById('ans1').value = `저는 최근 가정에서 ${selWho}${josa} ${selWhy} 때문에 저를(에게) ${selAct} ${selMood}을(를) 느꼈습니다.`;
+        } else {
+            txt.innerText = "조각을 모두 선택해주세요";
+        }
+    }
+
+    function aiLyrics() {
+        if(!selWho || !selWhy || !selAct || !selMood) { alert("상황 조각을 모두 선택해주세요!"); return; }
+        const sharp = document.getElementById('sharpInput').value;
+        const round = document.getElementById('roundInput').value;
+        if(!sharp || !round) { alert("말풍선 내용을 입력해주세요."); return; }
+
+        const verse = `문제는 "${selWhy}"\n"${sharp}"\n${selAct} 닫혀버린 내 마음`;
+        const chorus = `하지만 다시 용기 내어 말할게\n"${round}"\n${selWho}에게 전하는 나의 진심`;
+
+        document.getElementById('verseArea').value = verse;
+        document.getElementById('chorusArea').value = chorus;
+        document.getElementById('displaySituation').innerText = `${selWho} / ${selWhy} / ${selAct}`;
+        goToStep(2);
+    }
+
+    // [핵심] 6개 질문 합치기 로직
+    function combineAnswers() {
+        const a1 = document.getElementById('ans1').value; // 상황
+        const a2 = document.getElementById('ans2').value; // 계기
+        const a3 = document.getElementById('ans3').value; // 욕구
+        const a4 = document.getElementById('ans4').value; // 변화
+        const a5 = document.getElementById('ans5').value; // 반응
+        const a6 = document.getElementById('ans6').value; // 다짐
+
+        if(!a1 || !a2 || !a3 || !a4 || !a5 || !a6) { alert("6가지 질문에 모두 답해주세요. 짧게라도 괜찮습니다!"); return; }
+
+        const draft = 
+`${a1}
+
+구체적으로 이야기하자면, ${a2}
+
+그 당시 저의 솔직한 마음 속 욕구는 ${a3}
+
+감정적으로 대응하는 대신, 수업 시간에 배운 '나 전달법'을 사용하여 말을 바꾸어 보았습니다. ${a4}
+
+그렇게 진심을 전하자, 놀랍게도 ${a5}
+
+이번 EAIM 프로젝트 활동을 통해 저는 ${a6}`;
+
+        document.getElementById('draftArea').value = draft;
+        goToStep(4);
+    }
+
+    function aiTutorCheck() {
+        const draft = document.getElementById('draftArea').value;
+        document.getElementById('finalEssayArea').value = draft; 
+        goToStep(5);
+    }
+
+    function finalizeReport() {
+        document.getElementById('repWho').innerText = selWho;
+        document.getElementById('repWhy').innerText = selWhy;
+        document.getElementById('repAct').innerText = selAct;
+        document.getElementById('repMood').innerText = selMood;
+        document.getElementById('repVerse').innerText = document.getElementById('verseArea').value;
+        document.getElementById('repChorus').innerText = document.getElementById('chorusArea').value;
+        document.getElementById('repEssay').innerText = document.getElementById('finalEssayArea').value;
+        goToStep(6);
+    }
+
+    function saveAsImage() {
+        const report = document.getElementById("finalReport");
+        html2canvas(report).then(canvas => {
+            const link = document.createElement("a");
+            link.download = "가정수행평가_성찰보고서.png";
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+    }
+</script>
+
+</body>
+</html>

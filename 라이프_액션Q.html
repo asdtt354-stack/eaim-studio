@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life Action Q - 가정 생활 실천 본부</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        /* [1] 기본 디자인 */
+        body {
+            font-family: 'Pretendard', 'Malgun Gothic', sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        h1 { color: #2c3e50; border-bottom: 3px solid #e67e22; padding-bottom: 10px; }
+
+        .container {
+            background: white; width: 100%; max-width: 600px;
+            padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .step-box {
+            margin-bottom: 25px; padding: 20px; background: #eef2f5;
+            border-radius: 15px; border-left: 5px solid #3498db;
+        }
+
+        h3 { margin-top: 0; color: #34495e; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        
+        select, input[type="text"], textarea {
+            width: 100%; padding: 12px; margin-bottom: 10px;
+            border: 1px solid #bdc3c7; border-radius: 8px; box-sizing: border-box; font-size: 1rem;
+        }
+
+        /* [2] 버튼 스타일 */
+        .value-btn-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        .value-btn {
+            flex: 1; padding: 10px; border: none; border-radius: 10px;
+            cursor: pointer; font-weight: bold; transition: 0.3s; background: #ddd;
+        }
+        .value-btn.active { transform: scale(1.05); color: white; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        
+        #btn-ye.active { background: #e74c3c; } 
+        #btn-hyo.active { background: #f1c40f; color: #333; } 
+        #btn-jeong.active { background: #3498db; } 
+        #btn-chae.active { background: #2ecc71; } 
+
+        .music-section { background: #2c3e50; color: white; padding: 15px; border-radius: 10px; margin-top: 10px; }
+        .music-section a { color: #f1c40f; text-decoration: none; font-weight: bold; }
+
+        .btn-generate {
+            width: 100%; padding: 15px; background: #333; color: white;
+            font-size: 1.2rem; border: none; border-radius: 10px; cursor: pointer; font-weight: bold;
+        }
+        .btn-generate:hover { background: #555; }
+
+        /* [3] 결과 카드 (티켓) 디자인 */
+        .mission-ticket {
+            display: none; /* 처음엔 숨김 */
+            background: white; border: 3px dashed #333;
+            padding: 30px; margin-top: 20px; position: relative;
+        }
+        .mission-ticket::before {
+            content: "Action Ticket"; position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+            background: #333; color: white; padding: 5px 15px; font-weight: bold; border-radius: 20px;
+        }
+
+        /* [4] 저장/인쇄 버튼 (티켓 발권 후 보임) */
+        .save-actions {
+            display: none; gap: 10px; margin-top: 20px;
+        }
+        .btn-action {
+            flex: 1; padding: 12px; border: none; border-radius: 8px;
+            font-weight: bold; cursor: pointer; color: white; font-size: 1rem;
+        }
+        .btn-print { background-color: #2980b9; }
+        .btn-save { background-color: #27ae60; }
+
+        /* [5] 인쇄 전용 스타일 (종이로 뽑을 때) */
+        @media print {
+            body * { visibility: hidden; } /* 모든 요소 숨김 */
+            .mission-ticket, .mission-ticket * { visibility: visible; } /* 티켓만 보임 */
+            .mission-ticket { 
+                position: absolute; left: 0; top: 0; width: 100%; margin: 0; border: 2px solid #000; 
+            }
+            .container, h1, p, .save-actions { display: none; } /* 잡다한 것 숨김 */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Life Action Q 🏠</h1>
+        <p>EAIM 가정 수업: 마음을 행동으로 실천하기</p>
+        
+        <div class="step-box">
+            <h3>1. 오늘의 수련 가치 (Value)</h3>
+            <div class="value-btn-group">
+                <button class="value-btn" id="btn-ye" onclick="selectValue('ye', '식사 예절 & 인사')">예 (Ye)</button>
+                <button class="value-btn" id="btn-hyo" onclick="selectValue('hyo', '부모님 돕기')">효 (Hyo)</button>
+                <button class="value-btn" id="btn-jeong" onclick="selectValue('jeong', '솔직한 대화')">정직 (Honesty)</button>
+                <button class="value-btn" id="btn-chae" onclick="selectValue('chae', '청소 & 정리')">책임 (Job)</button>
+            </div>
+            <p id="value-desc" style="font-size:0.9rem; color:#666;">* 버튼을 눌러주세요.</p>
+        </div>
+
+        <div class="step-box">
+            <h3>2. 행동 설계 (Action Plan)</h3>
+            <label>언제 (Time & Place)</label>
+            <input type="text" id="actionTime" placeholder="예: 오늘 저녁 7시 식탁에서">
+            
+            <label>무엇을 (Specific Action)</label>
+            <input type="text" id="actionWhat" placeholder="구체적인 행동을 적어주세요.">
+            
+            <label>어떻게 (Method & Skill)</label>
+            <textarea id="actionHow" rows="2" placeholder="예: 두 손으로 공손하게 물건을 드린다."></textarea>
+        </div>
+
+        <div class="step-box">
+            <h3>3. 액션 BGM (Musicalization)</h3>
+            <div class="music-section">
+                <p>🎶 이 행동을 할 때 들을 음악을 준비해요.</p>
+                <input type="text" id="bgmTitle" placeholder="BGM 제목 (예: 설거지 노동요 vol.1)" style="width:100%; color:black;">
+            </div>
+        </div>
+
+        <button class="btn-generate" onclick="generateTicket()">🎫 실천 티켓 발권하기</button>
+
+        <div id="ticketArea">
+            <div class="mission-ticket" id="ticketResult">
+                <h2 style="text-align:center; color:#e67e22; margin-top:10px;">✨ MISSION CARD ✨</h2>
+                <p><strong>😎 플레이어:</strong> <span>나 (Student)</span></p>
+                <p><strong>🎯 목표 가치:</strong> <span id="ticketValue"></span></p>
+                <hr style="border:1px dashed #ddd;">
+                <p><strong>⏰ 언제:</strong> <span id="ticketTime"></span></p>
+                <p><strong>🛠️ 행동:</strong> <span id="ticketAction" style="font-size:1.2rem; font-weight:bold; color:#2c3e50;"></span></p>
+                <p><strong>📝 방법:</strong> <span id="ticketMethod"></span></p>
+                <hr style="border:1px dashed #ddd;">
+                <p><strong>🎧 BGM:</strong> <span id="ticketBGM"></span></p>
+                <div style="text-align:center; margin-top:20px; font-size:40px;">🔥</div>
+                <p style="text-align:center; color:#888; font-size:0.8rem;">EAIM 가정 실천 프로젝트</p>
+            </div>
+        </div>
+
+        <div class="save-actions" id="saveBox">
+            <button class="btn-action btn-print" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button>
+            <button class="btn-action btn-save" onclick="saveAsImage()">💾 이미지로 저장</button>
+        </div>
+
+    </div>
+
+    <script>
+        let selectedValue = '';
+
+        // [1] 가치 선택 함수
+        function selectValue(val, text) {
+            selectedValue = text;
+            
+            // 버튼 스타일 초기화
+            document.querySelectorAll('.value-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-' + val).classList.add('active');
+
+            // 힌트 변경
+            const whatInput = document.getElementById('actionWhat');
+            const howInput = document.getElementById('actionHow');
+
+            if(val === 'ye') {
+                whatInput.placeholder = "예: 수저 놓기, 현관 신발 정리";
+                howInput.placeholder = "예: 소리 나지 않게 살짝, 가지런히 놓는다.";
+            } else if(val === 'hyo') {
+                whatInput.placeholder = "예: 어깨 주물러 드리기, 설거지 돕기";
+                howInput.placeholder = "예: '시원하시죠?'라고 물으며 3분간 한다.";
+            } else if(val === 'jeong') {
+                whatInput.placeholder = "예: 실수 솔직히 말하기";
+                howInput.placeholder = "예: 변명 없이 '제 잘못입니다'라고 말한다.";
+            } else if(val === 'chae') {
+                whatInput.placeholder = "예: 내 방 환기하기, 빨래 개기";
+                howInput.placeholder = "예: 각을 맞춰서 네모나게 갠다.";
+            }
+            document.getElementById('value-desc').innerText = `선택: [${text}]`;
+        }
+
+        // [2] 티켓 생성 함수
+        function generateTicket() {
+            if(!selectedValue) {
+                alert("1번 '오늘의 가치'를 먼저 선택해주세요!"); return;
+            }
+            
+            // 내용 가져오기
+            const time = document.getElementById('actionTime').value;
+            const what = document.getElementById('actionWhat').value;
+            const how = document.getElementById('actionHow').value;
+            const bgm = document.getElementById('bgmTitle').value;
+
+            if(!what) { alert("무엇을 할지 적어주세요."); return; }
+
+            // 내용 넣기
+            document.getElementById('ticketValue').innerText = selectedValue;
+            document.getElementById('ticketTime').innerText = time || "오늘 중 언제든";
+            document.getElementById('ticketAction').innerText = what;
+            document.getElementById('ticketMethod').innerText = how || "정성을 다해서";
+            document.getElementById('ticketBGM').innerText = bgm || "현장 라이브 사운드";
+
+            // 화면에 표시
+            const ticket = document.getElementById('ticketResult');
+            const saveBox = document.getElementById('saveBox');
+            
+            ticket.style.display = 'block';
+            saveBox.style.display = 'flex'; // 저장 버튼 보이기
+            
+            // 스크롤 이동
+            saveBox.scrollIntoView({behavior: "smooth"});
+        }
+
+        // [3] 이미지 저장 함수 (html2canvas 사용)
+        function saveAsImage() {
+            const ticketElement = document.getElementById("ticketResult");
+            
+            // 캡처 시작
+            html2canvas(ticketElement).then(canvas => {
+                const link = document.createElement("a");
+                document.body.appendChild(link);
+                link.download = "나의_실천_티켓.png"; // 다운로드 파일명
+                link.href = canvas.toDataURL("image/png");
+                link.target = '_blank';
+                link.click();
+                document.body.removeChild(link);
+            });
+        }
+    </script>
+</body>
+</html>
