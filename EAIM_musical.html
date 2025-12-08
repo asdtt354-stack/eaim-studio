@@ -51,10 +51,9 @@
         .animate-fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         
-        .typing-cursor::after { content: '|'; animation: blink 1s step-start infinite; }
-        @keyframes blink { 50% { opacity: 0; } }
+        /* 텍스트 선택 허용 클래스 */
+        .allow-select { user-select: text !important; -webkit-user-select: text !important; cursor: text; }
 
-        /* Cue Sheet Table Styles */
         .cue-table th { background-color: #881337; color: #FCD34D; padding: 8px; font-size: 0.8rem; border: 1px solid #4a0410; white-space: nowrap; }
         .cue-table td { background-color: #fff; color: #000; padding: 0; font-size: 0.8rem; border: 1px solid #ddd; vertical-align: middle; }
         .cue-table tr:nth-child(even) td { background-color: #f9f9f9; }
@@ -65,7 +64,6 @@
         }
         .cue-input:focus { background-color: #FEF3C7; box-shadow: inset 0 0 0 2px #F59E0B; }
         
-        /* Save Status Indicator */
         .save-status {
             position: fixed; bottom: 20px; right: 20px;
             background: rgba(0,0,0,0.7); padding: 8px 16px; border-radius: 20px;
@@ -73,16 +71,37 @@
             pointer-events: none; opacity: 0; transition: opacity 0.5s;
         }
         .save-status.show { opacity: 1; }
+
+        /* --- [중요] 인쇄용 스타일 (Print CSS) --- */
+        @media print {
+            body { background-color: white !important; color: black !important; }
+            .no-print { display: none !important; } 
+            .print-only { display: block !important; }
+            
+            .app-container { 
+                box-shadow: none !important; border: none !important; margin: 0 !important; 
+                max-width: 100% !important; width: 100% !important; height: auto !important; overflow: visible !important;
+            }
+            .print-content-area {
+                background: white !important; color: black !important; border: none !important; box-shadow: none !important; padding: 0 !important;
+            }
+            .font-drama { color: black !important; white-space: pre-wrap !important; }
+            .cue-table th { background-color: #eee !important; color: black !important; border: 1px solid #000 !important; }
+            .cue-table td { border: 1px solid #000 !important; }
+            input { border: none !important; }
+            /* 대본 가사 등 색상 조정 */
+            .text-yellow-200 { color: #555 !important; }
+            .text-rose-200 { color: #000 !important; font-weight: bold !important; }
+        }
     </style>
 </head>
-<body class="min-h-screen pb-20">
+<body class="min-h-screen pb-20 print:bg-white print:pb-0">
     <div id="root"></div>
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
         const App = () => {
-            // State Definitions
             const [step, setStep] = useState(1);
             const [title, setTitle] = useState('');
             const [genre, setGenre] = useState('');
@@ -105,14 +124,13 @@
             const fileInputRef = useRef(null);
 
             const STAGES = [
-                { name: '오프닝 (기)', desc: '배경 소개, 웅장한 코러스 (Opening Chorus)', songType: 'Opening Chorus', light: '전체 조명 (Full Bright)' },
-                { name: '사건 (승)', desc: '갈등 시작 (1곡 이상)', songType: 'Conflict Song', light: '부분 조명 (Spot) -> 어둡게' },
-                { name: '절정 (전)', desc: '감정 폭발 (1곡 이상)', songType: 'Climax Solo/Duet', light: '핀 조명 (Pin Spot) & 붉은색' },
-                { name: '피날레 (결)', desc: '해결, 대단원 (1곡 이상)', songType: 'Finale Number', light: '따뜻한 전체 조명 (Warm)' },
-                { name: '커튼콜', desc: '전 출연진 떼창 & 인사 (Sing-along)', songType: 'Ensemble Sing-along', light: '객석 포함 전체 점등 (All On)' }
+                { name: '오프닝 (기)', desc: '배경 소개, 웅장한 코러스', songType: 'Musical Opening Chorus, Grand, Energetic', light: '전체 조명 (Full Bright)' },
+                { name: '사건 (승)', desc: '갈등 시작', songType: 'Tension, Minor Key, Fast Tempo', light: '부분 조명 (Spot) -> 어둡게' },
+                { name: '절정 (전)', desc: '감정 폭발', songType: 'Dramatic Power Ballad, Emotional, High Notes', light: '핀 조명 (Pin Spot) & 붉은색' },
+                { name: '피날레 (결)', desc: '해결, 대단원', songType: 'Touching, Hopeful, Major Key', light: '따뜻한 전체 조명 (Warm)' },
+                { name: '커튼콜', desc: '전 출연진 떼창', songType: 'Upbeat, Curtain Call, Festival Style', light: '객석 포함 전체 점등 (All On)' }
             ];
 
-            // --- [기능 1] 자동 저장 및 복구 (Auto Save) ---
             useEffect(() => {
                 const savedData = localStorage.getItem('eaimMusicalData');
                 if (savedData) {
@@ -138,14 +156,10 @@
             useEffect(() => {
                 const dataToSave = { step, title, genre, songCount, castList, scenes, songs, finalScript, cueSheetData };
                 localStorage.setItem('eaimMusicalData', JSON.stringify(dataToSave));
-                
                 setSaveMsg('자동 저장됨 💾');
-                const timer = setTimeout(() => setSaveMsg(''), 2000);
-                return () => clearTimeout(timer);
+                setTimeout(() => setSaveMsg(''), 2000);
             }, [step, title, genre, songCount, castList, scenes, songs, finalScript, cueSheetData]);
 
-
-            // --- [기능 2] 파일 다운로드 (File Download) ---
             const downloadFile = (content, fileName, mimeType) => {
                 const blob = new Blob([content], { type: mimeType });
                 const url = URL.createObjectURL(blob);
@@ -158,43 +172,22 @@
                 URL.revokeObjectURL(url);
             };
 
-            const handleDownloadScript = () => {
-                if (!finalScript) return alert("대본이 아직 완성되지 않았습니다.");
-                downloadFile(finalScript, `${title}_대본.txt`, "text/plain");
+            const copyToClipboard = (text) => {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert(`복사되었습니다! : ${text}`);
+                }).catch(err => {
+                    console.error('복사 실패:', err);
+                });
             };
 
-            const handleDownloadCueSheet = () => {
-                if (cueSheetData.length === 0) return alert("큐시트 데이터가 없습니다.");
-                let xlsContent = `
-                    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-                    <head><meta charset="UTF-8"></head><body>
-                    <table border="1">
-                        <thead>
-                            <tr style="background-color: #881337; color: #ffffff;">
-                                <th>순서</th><th>구분</th><th>내용</th><th>음향</th><th>조명</th><th>비고</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${cueSheetData.map((row, i) => `
-                                <tr>
-                                    <td>${i+1}</td>
-                                    <td>${row.scene}</td>
-                                    <td>${row.content}</td>
-                                    <td>${row.sound}</td>
-                                    <td>${row.light}</td>
-                                    <td>${row.note}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table></body></html>`;
-                downloadFile(xlsContent, `${title}_큐시트.xls`, "application/vnd.ms-excel");
+            const handlePrint = () => {
+                window.print();
             };
 
-            // --- [기능 3] 프로젝트 파일 저장/열기 (Project Backup) ---
             const saveProjectFile = () => {
                 const data = { title, genre, songCount, castList, scenes, songs, finalScript, cueSheetData, step };
                 downloadFile(JSON.stringify(data), `${title}_프로젝트.json`, "application/json");
-                alert("프로젝트 파일이 저장되었습니다.\n나중에 '불러오기'로 수정할 수 있습니다.");
+                alert("프로젝트 파일이 저장되었습니다.");
             };
 
             const loadProjectFile = (e) => {
@@ -213,20 +206,16 @@
                         setFinalScript(parsed.finalScript || '');
                         setCueSheetData(parsed.cueSheetData || []);
                         setStep(parsed.step || 1);
-                        alert("프로젝트를 성공적으로 불러왔습니다! 🎉");
-                    } catch (err) {
-                        alert("올바른 프로젝트 파일이 아닙니다.");
-                    }
+                        alert("불러오기 완료! 🎉");
+                    } catch (err) { alert("파일 오류"); }
                 };
                 reader.readAsText(file);
-                e.target.value = ''; // Reset input
+                e.target.value = '';
             };
 
-
-            // --- 기존 로직 ---
             const addCastMember = () => { setCastList([...castList, { role: '', desc: '' }]); };
             const removeCastMember = (index) => {
-                if(castList.length <= 1) return alert("최소 1명의 배우는 필요해요!");
+                if(castList.length <= 1) return alert("최소 1명 필요");
                 setCastList(castList.filter((_, i) => i !== index));
             };
             const updateCastMember = (index, field, value) => {
@@ -238,35 +227,94 @@
                 const newData = [...cueSheetData]; newData[idx][field] = val; setCueSheetData(newData);
             };
 
+            // --- [가상 대사 생성기] ---
+            const generateMockDialogue = (stageIdx, castList, context) => {
+                const mainChar = castList[0]?.role || "주인공";
+                const subChar = castList[1]?.role || "조연";
+                const thirdChar = castList[2]?.role || "앙상블";
+                let dialogue = "";
+                
+                if (stageIdx === 0) {
+                    dialogue += `${mainChar}: (등장하며) ${context || '이곳에서 이야기가 시작돼.'} 정말 떨리는군.\n`;
+                    dialogue += `${subChar}: 걱정 마. 우린 준비됐잖아?\n`;
+                    dialogue += `${thirdChar}: (다같이) 자, 시작해보자!`;
+                } else if (stageIdx === 1) {
+                    dialogue += `${subChar}: 큰일 났어! ${context || '문제가 발생했어.'}\n`;
+                    dialogue += `${mainChar}: 뭐? 그게 사실이야?\n`;
+                    dialogue += `${thirdChar}: 어떡하지... 분위기가 심상치 않아.`;
+                } else if (stageIdx === 2) {
+                    dialogue += `${mainChar}: (절규하며) 도대체 왜 나에게 이런 시련이! ${context || '너무 힘들어.'}\n`;
+                    dialogue += `${subChar}: 포기하지 마. 넌 할 수 있어.\n`;
+                } else if (stageIdx === 3) {
+                    dialogue += `${mainChar}: 드디어 해냈어. ${context || '모든게 해결됐어.'}\n`;
+                    dialogue += `${subChar}: 네 덕분이야.\n`;
+                    dialogue += `${thirdChar}: 와아! (환호)`;
+                } else if (stageIdx === 4) {
+                    dialogue += `${mainChar}: 관객 여러분 감사합니다!\n`;
+                    dialogue += `${subChar}: (손을 흔들며) 다음에 또 만나요!\n`;
+                }
+                return dialogue;
+            };
+
+            // --- [NEW] 가사(Lyrics) 생성기 ---
+            const generateMockLyrics = (stageIdx, songTitle, context) => {
+                let lyrics = "";
+                const keywords = context ? context.split(' ') : ['꿈', '희망'];
+                const keyWord = keywords[0] || '우리';
+
+                if (stageIdx === 0) { // 오프닝
+                    lyrics += `(Verse 1)\n막이 오르고 새로운 세상이 열려\n여기 ${keyWord}의 이야기가 시작되네\n가슴 뛰는 소리가 들리니\n\n`;
+                    lyrics += `(Chorus)\n${songTitle}! 오, ${songTitle}!\n우리의 꿈을 노래해\n다 함께 외쳐봐, 이 순간을 기억해\n환상의 무대 위로 초대할게!`;
+                } else if (stageIdx === 1) { // 갈등
+                    lyrics += `(Verse 1)\n어둠이 내려와, 뭔가 잘못됐어\n${keyWord}라는 말이 무색해져\n차가운 바람이 불어오네\n\n`;
+                    lyrics += `(Chorus)\n도대체 왜, ${songTitle}인가\n피할 수 없는 운명 앞에서\n나는 길을 잃고 헤매이네\n답을 찾을 수 있을까?`;
+                } else if (stageIdx === 2) { // 절정
+                    lyrics += `(Verse 1)\n더 이상 물러설 곳은 없어\n심장이 터질 것만 같아\n나를 짓누르는 무게를 견뎌\n\n`;
+                    lyrics += `(Chorus)\n${songTitle}! 나는 포기하지 않아\n나의 목소리를 들어봐\n저 하늘 끝까지 닿을 때까지\n나의 모든 걸 불태우리라!`;
+                } else if (stageIdx === 3) { // 피날레 (해결)
+                    lyrics += `(Verse 1)\n폭풍은 지나고 햇살이 비추네\n우리가 함께 걸어온 이 길\n${keyWord}의 의미를 이제 알겠어\n\n`;
+                    lyrics += `(Chorus)\n${songTitle}, 아름다운 날들이여\n서로의 손을 잡고 나아가자\n사랑과 희망이 가득한 곳으로\n영원히 함께 할 노래!`;
+                } else if (stageIdx === 4) { // 커튼콜 (떼창)
+                    lyrics += `(All Together)\n오늘을 기억해 주세요\n우리의 땀방울과 웃음을\n${songTitle}의 멜로디에 담아\n여러분께 바칩니다!\n\n`;
+                    lyrics += `(Chorus)\n랄랄라 랄랄라 함께 불러요\n${songTitle}! 에헤라디야!\n다시 만날 그날까지 안녕\n사랑합니다! 감사합니다! (Yeah!)`;
+                }
+                return lyrics;
+            };
+
             const generateMusical = () => {
                 if(!title) return alert("제목을 입력해주세요!");
                 setIsAnalyzing(true);
                 setStep(4);
                 
                 setTimeout(() => {
-                    let script = `🎭 [15분 단막 뮤지컬 기획안] : ${title}\n`;
-                    script += `🎪 장르: ${genre || '미정'} | ⏱️ 총 러닝타임: 약 15분\n`;
-                    script += `🎼 목표 넘버 수: ${songCount}곡\n\n`; 
-                    script += `━━━━━━━━━━━━━━━━━━\n`;
+                    let script = `🎭 [15분 단막 뮤지컬 대본] : ${title}\n`;
+                    script += `🎪 장르: ${genre || '미정'} | 🎼 ${songCount}곡\n`;
+                    script += `──────────────────────────────\n`;
                     script += `🌟 등장인물 (CAST)\n`;
-                    castList.forEach(member => { script += `  • ${member.role || '배역 미정'}: ${member.desc || '설명 없음'}\n`; });
-                    script += `━━━━━━━━━━━━━━━━━━\n\n`;
-                    script += `🎵 시놉시스 & 넘버 리스트\n\n`;
+                    castList.forEach(member => { script += ` • ${member.role}: ${member.desc}\n`; });
+                    script += `──────────────────────────────\n\n`;
                     
                     STAGES.forEach((stage, idx) => {
-                        const sceneContent = scenes[idx] || "내용 미정";
+                        const sceneContent = scenes[idx] || "내용 없음";
                         const songTitle = songs[idx] || "Untitled";
+                        
                         script += `Scene ${idx+1}. [${stage.name}]\n`;
-                        script += `📜 장면: ${sceneContent}\n`;
-                        script += `🎤 넘버: ♬ ${songTitle}\n`;
-                        let direction = "";
-                        if (idx === 0) direction = "막이 오르면 전 출연진(앙상블)이 등장하여 웅장한 코러스로 관객의 시선을 사로잡으며 배경을 설명합니다.";
-                        else if (idx === 4) direction = "조명을 객석까지 환하게 비추고, 모든 배우가 무대 앞으로 나와 관객과 함께 박수치며 '떼창'으로 신나게 마무리합니다.";
-                        else direction = `이 장면은 3분 내외로 속도감 있게 진행하며, 조명은 ${['점점 어둡게', '강렬한 붉은색으로', '따뜻하고 희망차게'][idx-1]} 연출합니다.`;
-                        script += `   (AI 연출 노트: ${direction})\n\n`;
+                        script += `(상황: ${sceneContent})\n\n`;
+                        
+                        script += `[ 대 사 (Dialogue) ]\n`;
+                        script += generateMockDialogue(idx, castList, sceneContent);
+                        script += `\n\n`;
+                        
+                        // [NEW] 가사 추가 부분
+                        script += `🎵 Musical Number ${idx+1}: ♬ ${songTitle}\n`;
+                        script += `   (Mood: ${stage.songType})\n`;
+                        script += `   ----------------------------------\n`;
+                        script += generateMockLyrics(idx, songTitle, sceneContent); // 가사 생성 함수 호출
+                        script += `\n   ----------------------------------\n`;
+                        script += `\n\n`;
                     });
-                    script += `━━━━━━━━━━━━━━━━━━\n`;
-                    script += `👏 감사합니다 - EAIM Production`;
+                    
+                    script += `EAIM Production - ${new Date().toLocaleDateString()} Created`;
                     setFinalScript(script);
 
                     const initialCues = STAGES.map((stage, idx) => ({
@@ -282,18 +330,18 @@
             };
 
             const resetAll = () => { 
-                if(confirm("모든 내용을 지우고 새로 만들까요?")) {
+                if(confirm("초기화 하시겠습니까?")) {
                     localStorage.removeItem('eaimMusicalData');
                     window.location.reload(); 
                 }
             };
 
             const renderCueSheet = () => (
-                <div className="w-full bg-white rounded-lg shadow-lg overflow-hidden animate-fade-in">
-                    <div className="p-2 bg-yellow-100 text-yellow-800 text-xs text-center border-b border-yellow-200">
-                        💡 표의 칸을 클릭하면 내용을 수정할 수 있어요!
+                <div className="w-full bg-white rounded-lg shadow-lg overflow-hidden animate-fade-in print:shadow-none print:border-none">
+                    <div className="p-2 bg-yellow-100 text-yellow-800 text-xs text-center border-b border-yellow-200 no-print">
+                        💡 칸을 클릭해 수정 | 드래그해서 복사 가능
                     </div>
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto print:overflow-visible">
                         <table className="w-full cue-table text-left border-collapse min-w-[500px]">
                             <thead>
                                 <tr>
@@ -305,7 +353,7 @@
                                     <th className="w-16">비고</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="allow-select">
                                 {cueSheetData.map((row, idx) => (
                                     <tr key={idx}>
                                         <td className="text-center font-bold">{idx + 1}</td>
@@ -323,27 +371,22 @@
             );
 
             return (
-                <div className="max-w-md mx-auto min-h-screen bg-[#1a0509] shadow-2xl flex flex-col relative border-x-4 border-[#4a0410]">
+                <div className="app-container max-w-md mx-auto min-h-screen bg-[#1a0509] shadow-2xl flex flex-col relative border-x-4 border-[#4a0410]">
                     
-                    {/* Save Status Indicator */}
-                    <div className={`save-status ${saveMsg ? 'show' : ''}`}>{saveMsg}</div>
+                    <div className={`save-status no-print ${saveMsg ? 'show' : ''}`}>{saveMsg}</div>
 
-                    {/* Header */}
-                    <header className="stage-curtain p-6 text-center z-20 relative">
+                    <header className="stage-curtain p-6 text-center z-20 relative no-print">
                         <div className="absolute top-0 left-0 w-full h-full spotlight pointer-events-none"></div>
                         <h1 className="text-3xl text-[#FCD34D] font-show drop-shadow-lg mb-1">에임 뮤지컬 메이커</h1>
-                        <p className="text-xs text-rose-200 font-drama">EAIM 교육과 함께하는 15분 단막극 만들기</p>
-                        
-                        {/* Project Save/Load Buttons */}
+                        <p className="text-xs text-rose-200 font-drama">15분 단막극 대본 & 큐시트 생성기</p>
                         <div className="absolute top-4 right-4 flex gap-2">
-                            <button onClick={saveProjectFile} title="프로젝트 저장" className="text-[#FCD34D] hover:text-white text-lg"><i className="fa-solid fa-file-arrow-down"></i></button>
-                            <button onClick={() => fileInputRef.current.click()} title="프로젝트 불러오기" className="text-[#FCD34D] hover:text-white text-lg"><i className="fa-solid fa-folder-open"></i></button>
+                            <button onClick={saveProjectFile} title="저장" className="text-[#FCD34D] hover:text-white text-lg"><i className="fa-solid fa-file-arrow-down"></i></button>
+                            <button onClick={() => fileInputRef.current.click()} title="열기" className="text-[#FCD34D] hover:text-white text-lg"><i className="fa-solid fa-folder-open"></i></button>
                             <input type="file" ref={fileInputRef} onChange={loadProjectFile} className="hidden" accept=".json" />
                         </div>
                     </header>
 
-                    {/* Progress */}
-                    <div className="flex justify-center gap-2 py-3 bg-[#2D0A14] sticky top-0 z-10 border-b border-[#4a0410]">
+                    <div className="flex justify-center gap-2 py-3 bg-[#2D0A14] sticky top-0 z-10 border-b border-[#4a0410] no-print">
                         {[1, 2, 3, 4].map(s => (
                             <div key={s} className={`w-2 h-2 rounded-full transition-all ${step === s ? 'bg-[#FCD34D] w-6' : 'bg-gray-700'}`}></div>
                         ))}
@@ -351,166 +394,136 @@
 
                     <main className="flex-grow p-6 overflow-y-auto hide-scrollbar">
                         
-                        {/* Step 1: Concept */}
                         {step === 1 && (
                             <div className="animate-fade-in space-y-6">
                                 <div className="text-center">
                                     <span className="text-[#FCD34D] text-4xl mb-2 block">🎟️</span>
-                                    <h2 className="text-xl font-bold text-white font-drama">작품의 컨셉을 정해요</h2>
+                                    <h2 className="text-xl font-bold text-white font-drama">작품 컨셉 설정</h2>
                                 </div>
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="text-xs text-rose-300 block mb-1">뮤지컬 제목 (Title)</label>
+                                        <label className="text-xs text-rose-300 block mb-1">뮤지컬 제목</label>
                                         <input type="text" className="w-full p-3 rounded-xl ticket-input text-lg font-bold text-center" 
-                                            placeholder="예: 우리들의 마법학교" value={title} onChange={e => setTitle(e.target.value)} />
+                                            placeholder="예: 마법의 숲" value={title} onChange={e => setTitle(e.target.value)} />
                                     </div>
                                     <div>
-                                        <label className="text-xs text-rose-300 block mb-1">장르 (Genre)</label>
+                                        <label className="text-xs text-rose-300 block mb-1">장르</label>
                                         <div className="grid grid-cols-2 gap-2">
-                                            {['판타지', '학교/청춘', '역사/시대극', '코미디'].map(g => (
+                                            {['판타지', '학교', '시대극', '코미디'].map(g => (
                                                 <button key={g} onClick={() => setGenre(g)} 
-                                                    className={`p-2 rounded-lg text-sm border ${genre === g ? 'bg-[#FCD34D] text-[#2D0A14] border-[#FCD34D] font-bold' : 'bg-transparent text-gray-400 border-gray-700 hover:border-gray-500'}`}>
+                                                    className={`p-2 rounded-lg text-sm border ${genre === g ? 'bg-[#FCD34D] text-[#2D0A14] font-bold' : 'bg-transparent text-gray-400 border-gray-700'}`}>
                                                     {g}
                                                 </button>
                                             ))}
                                         </div>
                                     </div>
-                                    <div>
-                                        <label className="text-xs text-rose-300 block mb-1">목표 넘버 수</label>
-                                        <div className="flex items-center gap-2 bg-white/5 p-2 rounded-lg border border-white/10">
-                                            <span className="text-lg">🎼</span>
-                                            <input type="number" min="1" max="10" className="w-full bg-transparent text-white font-bold text-center outline-none" 
-                                                value={songCount} onChange={e => setSongCount(e.target.value)} />
-                                            <span className="text-xs text-gray-400 w-10">곡</span>
-                                        </div>
-                                    </div>
                                 </div>
-                                <button onClick={() => setStep(2)} className="w-full bg-[#9F1239] hover:bg-[#BE123C] text-white py-4 rounded-xl font-bold font-show text-lg shadow-lg mt-8 transition transform active:scale-95">
-                                    캐스팅 하러 가기 👉
-                                </button>
+                                <button onClick={() => setStep(2)} className="w-full bg-[#9F1239] hover:bg-[#BE123C] text-white py-4 rounded-xl font-bold mt-8">다음: 캐스팅 👉</button>
                             </div>
                         )}
 
-                        {/* Step 2: Casting */}
                         {step === 2 && (
                             <div className="animate-fade-in space-y-6">
-                                <div className="text-center">
-                                    <span className="text-[#FCD34D] text-4xl mb-2 block">🎭</span>
-                                    <h2 className="text-xl font-bold text-white font-drama">배우를 캐스팅해요</h2>
-                                </div>
+                                <div className="text-center"><h2 className="text-xl font-bold text-white font-drama">배우 캐스팅</h2></div>
                                 <div className="space-y-4">
                                     {castList.map((member, idx) => (
-                                        <div key={idx} className="cast-card p-4 rounded-xl relative group">
+                                        <div key={idx} className="cast-card p-4 rounded-xl relative">
                                             <div className="flex gap-2 mb-2">
-                                                <input type="text" className="w-1/3 p-1 bg-transparent border-b border-gray-600 text-yellow-300 text-sm font-bold placeholder-yellow-300/50 focus:outline-none focus:border-yellow-300" 
-                                                    placeholder="역할 이름" value={member.role} onChange={(e) => updateCastMember(idx, 'role', e.target.value)} />
-                                                <input type="text" className="flex-1 p-1 bg-transparent border-b border-gray-600 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-white" 
-                                                    placeholder="설명 / 배우 이름" value={member.desc} onChange={(e) => updateCastMember(idx, 'desc', e.target.value)} />
+                                                <input type="text" className="w-1/3 p-1 bg-transparent border-b border-gray-600 text-yellow-300 font-bold" 
+                                                    placeholder="역할" value={member.role} onChange={(e) => updateCastMember(idx, 'role', e.target.value)} />
+                                                <input type="text" className="flex-1 p-1 bg-transparent border-b border-gray-600 text-white" 
+                                                    placeholder="설명" value={member.desc} onChange={(e) => updateCastMember(idx, 'desc', e.target.value)} />
                                             </div>
-                                            {castList.length > 1 && (
-                                                <button onClick={() => removeCastMember(idx)} className="absolute top-2 right-2 text-gray-600 hover:text-red-500 transition opacity-0 group-hover:opacity-100 p-1">
-                                                    <i className="fa-solid fa-trash-can"></i>
-                                                </button>
-                                            )}
+                                            {castList.length > 1 && <button onClick={() => removeCastMember(idx)} className="absolute top-2 right-2 text-gray-500"><i className="fa-solid fa-trash-can"></i></button>}
                                         </div>
                                     ))}
-                                    <button onClick={addCastMember} className="w-full py-3 border-2 border-dashed border-gray-600 rounded-xl text-gray-400 hover:text-white hover:border-gray-400 transition flex items-center justify-center gap-2">
-                                        <i className="fa-solid fa-plus-circle"></i> 배역 추가하기
-                                    </button>
+                                    <button onClick={addCastMember} className="w-full py-3 border-2 border-dashed border-gray-600 rounded-xl text-gray-400">배역 추가 +</button>
                                 </div>
                                 <div className="flex gap-3 mt-8">
-                                    <button onClick={() => setStep(1)} className="flex-1 bg-gray-800 text-gray-400 py-3 rounded-xl font-bold hover:bg-gray-700">이전</button>
-                                    <button onClick={() => setStep(3)} className="flex-[2] bg-[#9F1239] hover:bg-[#BE123C] text-white py-3 rounded-xl font-bold shadow-lg">스토리 짜기 👉</button>
+                                    <button onClick={() => setStep(1)} className="flex-1 bg-gray-800 text-gray-400 py-3 rounded-xl font-bold">이전</button>
+                                    <button onClick={() => setStep(3)} className="flex-[2] bg-[#9F1239] text-white py-3 rounded-xl font-bold">다음: 스토리 👉</button>
                                 </div>
                             </div>
                         )}
 
-                        {/* Step 3: Plot & Songs */}
                         {step === 3 && (
                             <div className="animate-fade-in space-y-6 pb-10">
-                                <div className="text-center">
-                                    <span className="text-[#FCD34D] text-4xl mb-2 block">🎼</span>
-                                    <h2 className="text-xl font-bold text-white font-drama">장면과 노래 만들기</h2>
-                                </div>
-                                
+                                <div className="text-center"><h2 className="text-xl font-bold text-white font-drama">장면 구성</h2></div>
                                 <div className="space-y-6">
                                     {STAGES.map((stage, idx) => (
-                                        <div key={idx} className={`bg-[#2D0A14] border rounded-xl p-4 shadow-md relative overflow-hidden ${idx === 4 ? 'border-[#FCD34D] bg-[#2D0A14]/50' : 'border-[#4a0410]'}`}>
-                                            <div className="absolute top-0 right-0 p-2 opacity-10 text-6xl font-show text-white">{idx === 4 ? '★' : idx+1}</div>
-                                            <h3 className={`font-bold text-lg mb-1 ${idx === 4 ? 'text-[#FCD34D]' : 'text-white'}`}>{stage.name}</h3>
-                                            <p className="text-[10px] text-gray-400 mb-3">{stage.desc}</p>
-                                            
-                                            <div className="space-y-2">
-                                                <input type="text" className="w-full p-2 rounded-lg ticket-input text-sm" 
-                                                    placeholder="어떤 일이 일어나나요?" value={scenes[idx]} onChange={e => handleSceneChange(idx, e.target.value)} />
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-lg">🎵</span>
-                                                    <input type="text" className="flex-1 p-2 rounded-lg ticket-input text-sm font-bold text-rose-200" 
-                                                        placeholder={idx === 0 ? "코러스 제목" : idx === 4 ? "떼창 제목" : "넘버 제목"} 
-                                                        value={songs[idx]} onChange={e => handleSongChange(idx, e.target.value)} />
-                                                </div>
+                                        <div key={idx} className={`bg-[#2D0A14] border rounded-xl p-4 relative ${idx === 4 ? 'border-[#FCD34D]' : 'border-[#4a0410]'}`}>
+                                            <div className="absolute top-0 right-0 p-2 opacity-10 text-6xl font-show text-white">{idx+1}</div>
+                                            <h3 className="font-bold text-lg mb-1 text-white">{stage.name}</h3>
+                                            <input type="text" className="w-full p-2 mb-2 rounded-lg ticket-input text-sm" 
+                                                placeholder="장면 내용" value={scenes[idx]} onChange={e => handleSceneChange(idx, e.target.value)} />
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-lg">🎵</span>
+                                                <input type="text" className="flex-1 p-2 rounded-lg ticket-input text-sm text-rose-200" 
+                                                    placeholder="노래 제목" value={songs[idx]} onChange={e => handleSongChange(idx, e.target.value)} />
                                             </div>
                                         </div>
                                     ))}
                                 </div>
-
                                 <div className="flex gap-3 mt-8">
-                                    <button onClick={() => setStep(2)} className="flex-1 bg-gray-800 text-gray-400 py-3 rounded-xl font-bold hover:bg-gray-700">이전</button>
-                                    <button onClick={generateMusical} className="flex-[2] bg-gradient-to-r from-yellow-500 to-amber-600 text-black py-3 rounded-xl font-bold shadow-lg hover:scale-[1.02] transition-transform">
-                                        AI 연출가에게 보내기 🎬
-                                    </button>
+                                    <button onClick={() => setStep(2)} className="flex-1 bg-gray-800 text-gray-400 py-3 rounded-xl font-bold">이전</button>
+                                    <button onClick={generateMusical} className="flex-[2] bg-gradient-to-r from-yellow-500 to-amber-600 text-black py-3 rounded-xl font-bold">AI 연출하기 🎬</button>
                                 </div>
                             </div>
                         )}
 
-                        {/* Step 4: Final Result (Download Added) */}
                         {step === 4 && (
                             <div className="animate-fade-in flex flex-col items-center h-full">
                                 {isAnalyzing ? (
                                     <div className="flex flex-col items-center justify-center h-80">
-                                        <div className="text-6xl animate-bounce mb-4">🤖🎬</div>
-                                        <h3 className="text-xl font-bold text-white mb-2">AI 연출가가 작업 중입니다</h3>
-                                        <p className="text-gray-400 text-sm">대본 작성 및 큐시트 조명 세팅 중...</p>
+                                        <div className="text-6xl animate-bounce mb-4">🤖</div>
+                                        <h3 className="text-xl font-bold text-white">대본 & 가사 작성 중...</h3>
                                     </div>
                                 ) : (
                                     <div className="w-full space-y-4">
-                                        <div className="flex justify-center gap-4 mb-2">
-                                            <button onClick={() => setResultMode('script')} className={`px-4 py-2 rounded-full font-bold text-sm transition ${resultMode === 'script' ? 'bg-[#FCD34D] text-black' : 'bg-gray-800 text-gray-400'}`}>
-                                                📜 대본 (Script)
-                                            </button>
-                                            <button onClick={() => setResultMode('cuesheet')} className={`px-4 py-2 rounded-full font-bold text-sm transition ${resultMode === 'cuesheet' ? 'bg-[#FCD34D] text-black' : 'bg-gray-800 text-gray-400'}`}>
-                                                📑 큐시트 (Cue Sheet)
-                                            </button>
+                                        <div className="flex justify-center gap-4 mb-2 no-print">
+                                            <button onClick={() => setResultMode('script')} className={`px-4 py-2 rounded-full font-bold text-sm ${resultMode === 'script' ? 'bg-[#FCD34D] text-black' : 'bg-gray-800 text-gray-400'}`}>📜 대본</button>
+                                            <button onClick={() => setResultMode('cuesheet')} className={`px-4 py-2 rounded-full font-bold text-sm ${resultMode === 'cuesheet' ? 'bg-[#FCD34D] text-black' : 'bg-gray-800 text-gray-400'}`}>📑 큐시트</button>
                                         </div>
 
                                         {resultMode === 'script' ? (
-                                            <div className="bg-white/10 rounded-xl p-6 border border-white/20 shadow-2xl relative overflow-hidden animate-fade-in">
-                                                <pre className="font-drama text-gray-200 text-sm leading-loose whitespace-pre-wrap typing-cursor">{finalScript}</pre>
+                                            <div className="bg-white/10 rounded-xl p-6 border border-white/20 shadow-2xl relative print-content-area">
+                                                <div className="no-print text-center text-xs text-gray-400 mb-2">✨ 텍스트를 드래그해서 복사할 수 있습니다 ✨</div>
+                                                <pre className="font-drama text-gray-200 text-sm leading-loose whitespace-pre-wrap allow-select">{finalScript}</pre>
                                             </div>
                                         ) : (
                                             renderCueSheet()
                                         )}
 
-                                        <div className="grid grid-cols-2 gap-3 mt-4">
-                                            {/* 다운로드 버튼 */}
-                                            {resultMode === 'script' ? (
-                                                 <button onClick={handleDownloadScript} className="col-span-2 bg-[#FCD34D] hover:bg-yellow-400 text-[#2D0A14] py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2">
-                                                    <i className="fa-solid fa-file-arrow-down"></i> 대본 다운로드 (.txt)
-                                                </button>
-                                            ) : (
-                                                <button onClick={handleDownloadCueSheet} className="col-span-2 bg-[#2ea043] hover:bg-[#3fb950] text-white py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2">
-                                                    <i className="fa-solid fa-file-excel"></i> 큐시트 엑셀 다운로드
-                                                </button>
-                                            )}
-                                            
-                                            <button onClick={() => setStep(3)} className="bg-gray-700 text-gray-300 py-3 rounded-xl font-bold">수정하기</button>
+                                        <div className="bg-[#2D0A14] border border-[#FCD34D]/30 p-4 rounded-xl mt-4 no-print">
+                                            <h3 className="text-[#FCD34D] font-bold text-sm mb-2"><i className="fa-solid fa-music"></i> Suno AI용 넘버 복사하기</h3>
+                                            <div className="space-y-2">
+                                                {songs.map((song, i) => song && (
+                                                    <div key={i} className="flex items-center justify-between bg-white/5 p-2 rounded text-xs">
+                                                        <span className="truncate flex-1 text-white mr-2">
+                                                            <span className="text-yellow-500 font-bold">Track {i+1}:</span> [{STAGES[i].songType}] {song}
+                                                        </span>
+                                                        <button 
+                                                            onClick={() => copyToClipboard(`[${STAGES[i].songType}] ${song}`)}
+                                                            className="bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded whitespace-nowrap"
+                                                        >
+                                                            복사 <i className="fa-regular fa-copy"></i>
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-3 mt-4 no-print">
+                                            <button onClick={handlePrint} className="col-span-2 bg-white text-black py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2">
+                                                <i className="fa-solid fa-print"></i> PDF 저장 / 인쇄
+                                            </button>
+                                            <button onClick={() => setStep(3)} className="bg-gray-700 text-gray-300 py-3 rounded-xl font-bold">수정</button>
                                             <button onClick={resetAll} className="bg-gray-700 text-gray-300 py-3 rounded-xl font-bold">새로 만들기</button>
                                         </div>
                                     </div>
                                 )}
                             </div>
                         )}
-
                     </main>
                 </div>
             );
