@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>EAIM 역사 신문사: 무결점 버전</title>
+    <style>
+        /* 🎨 전체 레이아웃 */
+        body { 
+            font-family: 'Noto Serif KR', serif; margin: 0; padding: 0; 
+            background-color: #222; color: #333; overflow-x: hidden;
+        }
+
+        /* 🎬 시네마틱 배경 */
+        #bg-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/e/e3/Gyeongbokgung_Palace.jpg');
+            background-size: cover; background-position: center;
+            z-index: -5; transition: background-image 1s ease-in-out;
+            animation: cinematicMove 30s infinite alternate linear;
+        }
+        @keyframes cinematicMove { 0% { transform: scale(1.0); } 100% { transform: scale(1.15); } }
+
+        .bg-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: -4; pointer-events: none; }
+
+        /* 컨테이너 */
+        .container { 
+            width: 90%; max-width: 800px; margin: 40px auto; 
+            background: rgba(255, 255, 255, 0.94); 
+            padding: 30px; border-radius: 20px; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7); 
+            border: 1px solid #8d6e63; backdrop-filter: blur(5px); 
+            text-align: center; position: relative; z-index: 10;
+        }
+
+        /* 텍스트 & 버튼 */
+        h1 { font-size: 2.5em; margin: 0 0 10px 0; color: #3e2723; }
+        .subtitle { color: #5d4037; margin-bottom: 20px; font-weight: bold; }
+        .btn-menu { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
+        .action-btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; transition: 0.2s; }
+        .btn-org { background: #ff9800; } .btn-red { background: #d32f2f; } .btn-brn { background: #5d4037; }
+        .action-btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+        /* 인물 리스트 */
+        .category-title { font-weight: bold; padding: 10px; border-radius: 6px; margin: 20px 0 10px 0; color: white; text-align: left; background: #4e342e; }
+        .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; }
+        .char-card { background: white; border-radius: 10px; padding: 10px; cursor: pointer; border: 2px solid #ddd; transition: 0.3s; display: flex; flex-direction: column; align-items: center; }
+        .char-card:hover { transform: scale(1.08); border-color: #ff9800; background: #fff8e1; }
+        
+        /* ★ 수정됨: 썸네일 박스 (이미지 깨지면 이모지 나옴) */
+        .thumb-box { width: 70px; height: 70px; border-radius: 50%; overflow: hidden; background: #fff3e0; border: 2px solid #ccc; margin-bottom: 5px; position: relative; display:flex; justify-content:center; align-items:center;}
+        .thumb-box img { width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0; }
+        .thumb-fallback { font-size: 35px; line-height: 70px; }
+
+        /* 게임 화면 */
+        .game-header { display: flex; justify-content: space-between; font-weight: bold; color: #555; margin-bottom: 5px; }
+        .progress-bar { width: 100%; height: 10px; background: #ddd; border-radius: 5px; margin-bottom: 20px; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; background: linear-gradient(to right, #ff9800, #ff5722); transition: 0.5s; }
+        
+        /* 게임 메인 이미지 박스 */
+        .big-img-box { width: 150px; height: 150px; border-radius: 50%; margin: 0 auto 20px; border: 5px solid #8d6e63; background: #fff3e0; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.3); position: relative; display:flex; justify-content:center; align-items:center;}
+        .big-img-box img { width: 100%; height: 100%; object-fit: cover; position:absolute; top:0; left:0; }
+        .big-fallback { font-size: 70px; }
+
+        .emotion-box { background: #fff3e0; padding: 15px; border-radius: 10px; margin-bottom: 20px; font-style: italic; color: #e65100; font-weight: bold; border-left: 6px solid #ff9800; }
+        .choice-btn { width: 100%; padding: 15px; margin-bottom: 10px; font-size: 1.1em; cursor: pointer; border: none; border-radius: 10px; background: #5d4037; color: white; font-weight: bold; transition: 0.2s; }
+        .choice-btn:hover { background: #795548; }
+
+        /* 글쓰기 화면 */
+        .input-group { text-align: left; margin-bottom: 15px; }
+        .input-label { display: block; font-weight: bold; margin-bottom: 5px; color: #3e2723; }
+        .input-field { width: 100%; padding: 10px; border: 2px solid #bcaaa4; border-radius: 5px; font-size: 1em; box-sizing: border-box; }
+
+        /* 신문 화면 */
+        #newspaper-area { background-color: #fdf5e6; padding: 40px; border: 1px solid #ccc; text-align: left; }
+        .news-title { font-size: 3em; font-weight: bold; font-family: serif; text-align: center; border-bottom: 4px double #333; margin-bottom: 30px; padding-bottom: 10px; }
+        .article-card { border: 1px solid #999; padding: 20px; background: white; margin-bottom: 20px; box-shadow: 3px 3px 5px rgba(0,0,0,0.1); }
+        .article-hl { font-size: 1.4em; font-weight: bold; border-bottom: 1px solid #ddd; margin-bottom: 10px; padding-bottom: 5px; }
+
+        .hidden { display: none; }
+
+        @media print {
+            .no-print { display: none !important; }
+            body, .container { background: white; border: none; box-shadow: none; margin: 0; width: 100%; max-width: 100%; }
+            #bg-layer, .bg-overlay { display: none; }
+            #newspaper-area { border: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="bg-layer"></div>
+<div class="bg-overlay"></div>
+
+<div class="container">
+    
+    <div id="screen-select">
+        <h1>🕰️ EAIM 역사 신문사</h1>
+        <p class="subtitle">배경이 살아 움직이는 생생한 역사 탐험</p>
+
+        <div class="btn-menu">
+            <button class="action-btn btn-org" onclick="showNewspaper()">📰 내 신문 보기</button>
+            <button class="action-btn btn-red" onclick="resetAll()">🗑️ 초기화</button>
+        </div>
+
+        <div class="category-title">👑 고뇌하는 리더</div><div class="char-grid" id="list-leader"></div>
+        <div class="category-title">🎨 창의적인 인재</div><div class="char-grid" id="list-creator"></div>
+        <div class="category-title">🇰🇷 용기 있는 영웅</div><div class="char-grid" id="list-hero"></div>
+        <div class="category-title">🌾 평범한 우리들</div><div class="char-grid" id="list-common"></div>
+    </div>
+
+    <div id="screen-game" class="hidden">
+        <div class="game-header"><span>History Adventure</span><span id="step-txt">Scene 1</span></div>
+        <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+
+        <div class="big-img-box">
+            <div class="big-fallback" id="game-fallback"></div>
+            <img id="game-img" onerror="this.style.display='none'">
+        </div>
+
+        <h2 id="game-name"></h2>
+        <div class="emotion-box">"💡 <span id="game-emotion"></span>"</div>
+        <p id="game-situation" style="font-size:1.1em; line-height:1.6;"></p>
+
+        <div id="choices">
+            <button class="choice-btn" onclick="nextStep(1)">선택지 1</button>
+            <button class="choice-btn" onclick="nextStep(2)">선택지 2</button>
+        </div>
+    </div>
+
+    <div id="screen-write" class="hidden">
+        <h2>✍️ 기자단 심층 취재</h2>
+        <p>현장의 감동을 기사로 남겨주세요.</p>
+        <div class="big-img-box" style="width:100px; height:100px;">
+            <div class="big-fallback" id="write-fallback" style="font-size:50px;"></div>
+            <img id="write-img" onerror="this.style.display='none'">
+        </div>
+
+        <div class="input-group"><label class="input-label">1. [헤드라인] 사건을 한 문장으로?</label><input type="text" id="inp-hl" class="input-field"></div>
+        <div class="input-group"><label class="input-label">2. [팩트] 무엇을 보았나요?</label><input type="text" id="inp-evt" class="input-field"></div>
+        <div class="input-group"><label class="input-label">3. [공감] 인물의 심정은?</label><input type="text" id="inp-emo" class="input-field"></div>
+        <div class="input-group"><label class="input-label">4. [생각] 나라면 어땠을까요?</label><input type="text" id="inp-th" class="input-field"></div>
+
+        <button class="choice-btn btn-org" onclick="saveArticle()">📰 기사 발행 완료!</button>
+    </div>
+
+    <div id="screen-news" class="hidden">
+        <div id="newspaper-area">
+            <div class="news-title">THE HISTORY TIMES</div>
+            <div id="news-content"></div>
+        </div>
+        <div class="btn-menu no-print" style="margin-top:20px;">
+            <button class="action-btn btn-brn" onclick="window.print()">🖨️ 인쇄 / 저장</button>
+            <button class="action-btn btn-org" onclick="goHome()">🏠 홈으로</button>
+        </div>
+    </div>
+
+</div>
+
+<audio id="bgm-player"></audio>
+
+<script>
+    // ★ 안정적인 위키미디어 이미지 사용
+    const BG_HOME = "https://upload.wikimedia.org/wikipedia/commons/e/e3/Gyeongbokgung_Palace.jpg"; 
+    const BG_SEA = "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Korean_sea.jpg/1280px-Korean_sea.jpg";
+    const BG_WAR = "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/March_1st_Movement_Pagoda_Park.jpg/1024px-March_1st_Movement_Pagoda_Park.jpg"; 
+    const BG_ROOM = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Tripitaka_Koreana_depositories_Haeinsa.jpg/1280px-Tripitaka_Koreana_depositories_Haeinsa.jpg";
+
+    const DB = [
+        { id: 0, cat: "leader", name: "세종대왕", emo: "🤴", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Sejong_the_Great.jpg/300px-Sejong_the_Great.jpg", audio: "https://actions.google.com/sounds/v1/crowds/battle_crowd_celebrate_stutter.ogg", story: [{bg:BG_HOME, em:"답답함", sit:"신하들이 반대합니다.", a:"설득한다", b:"포기한다"}, {bg:BG_ROOM, em:"고뇌", sit:"글자 모양은?", a:"입 모양 본뜸", b:"옛 글자 모방"}, {bg:BG_HOME, em:"환희", sit:"한글 완성!", a:"용비어천가", b:"벽보"}] },
+        { id: 1, cat: "hero", name: "이순신", emo: "⚔️", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Yi_Sun-sin_portrait.jpg/300px-Yi_Sun-sin_portrait.jpg", audio: "https://actions.google.com/sounds/v1/water/waves_crashing_on_rock_beach.ogg", story: [{bg:BG_SEA, em:"비장함", sit:"12척 대 수백 척.", a:"죽고자 하면 산다", b:"도망"}, {bg:BG_SEA, em:"냉철", sit:"전투 장소?", a:"울돌목", b:"넓은 바다"}, {bg:BG_SEA, em:"승리", sit:"전군 돌격!", a:"돌격", b:"후퇴"}] },
+        { id: 2, cat: "hero", name: "유관순", emo: "🇰🇷", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Yu_Gwan-sun_1.jpg/300px-Yu_Gwan-sun_1.jpg", story:[{bg:BG_WAR, em:"슬픔", sit:"만세운동 준비", a:"만세", b:"..."}, {bg:BG_WAR, em:"결의", sit:"봉화 신호", a:"불을 켠다", b:"잔다"}, {bg:BG_WAR, em:"희생", sit:"대한독립만세!", a:"외친다", b:"숨는다"}] },
+        { id: 3, cat: "creator", name: "장영실", emo: "☔", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Jang_Yeong-sil.jpg/300px-Jang_Yeong-sil.jpg", story:[{bg:BG_HOME, em:"열정", sit:"비의 양 측정", a:"측우기", b:"그릇"}, {bg:BG_HOME, em:"집중", sit:"물시계", a:"자격루", b:"해시계"}, {bg:BG_HOME, em:"뿌듯", sit:"과학 발전", a:"만세", b:"..."}] },
+        { id: 4, cat: "leader", name: "정조", emo: "🏰", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/King_Jeongjo.jpg/300px-King_Jeongjo.jpg", story:[{bg:BG_HOME, em:"효심", sit:"수원 화성 축조", a:"거중기 사용", b:"그냥"}, {bg:BG_HOME, em:"사랑", sit:"품삯 지급", a:"준다", b:"안준다"}, {bg:BG_HOME, em:"꿈", sit:"개혁", a:"추진", b:"유지"}] },
+        { id: 5, cat: "leader", name: "선덕여왕", emo: "👑", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Queen_Seondeok_statue.jpg/300px-Queen_Seondeok_statue.jpg", story:[{bg:BG_HOME, em:"지혜", sit:"별 관측", a:"첨성대", b:"안봄"}, {bg:BG_HOME, em:"위기", sit:"반란", a:"연날리기", b:"숨음"}, {bg:BG_HOME, em:"평화", sit:"서라벌", a:"노래", b:"춤"}] },
+        { id: 6, cat: "creator", name: "김홍도", emo: "🎨", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Kim_Hongdo.jpg/300px-Kim_Hongdo.jpg", story:[{bg:BG_WAR, em:"흥", sit:"씨름판", a:"그린다", b:"안그림"}, {bg:BG_HOME, em:"관찰", sit:"서당", a:"그린다", b:"혼냄"}, {bg:BG_HOME, em:"예술", sit:"풍속화", a:"전시", b:"보관"}] },
+        { id: 7, cat: "creator", name: "신사임당", emo: "🍇", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Shin_Saimdang.jpg/300px-Shin_Saimdang.jpg", story:[{bg:BG_HOME, em:"섬세", sit:"풀벌레", a:"초충도", b:"잡음"}, {bg:BG_HOME, em:"교육", sit:"율곡이이", a:"가르침", b:"놀게함"}, {bg:BG_HOME, em:"예술", sit:"완성", a:"감상", b:"..."}] },
+        { id: 8, cat: "hero", name: "안중근", emo: "🔫", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Ahn_Jung-geun.jpg/300px-Ahn_Jung-geun.jpg", story:[{bg:BG_WAR, em:"분노", sit:"이토 히로부미", a:"저격 계획", b:"무시"}, {bg:BG_WAR, em:"결의", sit:"하얼빈 역", a:"탕!탕!", b:"취소"}, {bg:BG_WAR, em:"평화", sit:"동양평화론", a:"집필", b:"..."}] },
+        { id: 9, cat: "common", name: "학도병", emo: "🎒", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Student_Soldiers_in_Pohang.jpg/300px-Student_Soldiers_in_Pohang.jpg", story:[{bg:BG_WAR, em:"공포", sit:"전쟁 발발", a:"참전", b:"피난"}, {bg:BG_WAR, em:"그리움", sit:"어머니 전상서", a:"쓴다", b:"안씀"}, {bg:BG_WAR, em:"용기", sit:"낙동강", a:"사수", b:"후퇴"}] }
+    ];
+
+    let curChar = null;
+    let step = 0;
+    const listMap = { leader: "list-leader", creator: "list-creator", hero: "list-hero", common: "list-common" };
+    
+    // 버튼 생성 (이미지 깨짐 방지: 이모지가 기본으로 있고, 이미지가 덮는 구조)
+    DB.forEach(char => {
+        const btn = document.createElement('div');
+        btn.className = 'char-card';
+        btn.innerHTML = `
+            <div class="thumb-box">
+                <div class="thumb-fallback">${char.emo}</div>
+                <img src="${char.img}" onerror="this.style.display='none'">
+            </div>
+            <div style="font-size:0.9em; font-weight:bold;">${char.name}</div>
+        `;
+        btn.onclick = () => startGame(char);
+        const target = document.getElementById(listMap[char.cat]);
+        if(target) target.appendChild(btn);
+    });
+
+    function setBG(url) { document.getElementById('bg-layer').style.backgroundImage = `url('${url || BG_HOME}')`; }
+    function showScreen(id) { ['screen-select','screen-game','screen-write','screen-news'].forEach(s => document.getElementById(s).classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
+
+    function startGame(char) {
+        curChar = char; step = 0;
+        showScreen('screen-game');
+        
+        // 메인 이미지 설정
+        document.getElementById('game-fallback').innerText = char.emo;
+        const img = document.getElementById('game-img');
+        img.style.display = 'block';
+        img.src = char.img; 
+
+        document.getElementById('game-name').innerText = char.name;
+        renderStep();
+    }
+
+    function renderStep() {
+        const sData = curChar.story[step];
+        setBG(sData.bg);
+        document.getElementById('step-txt').innerText = `Scene ${step+1} / ${curChar.story.length}`;
+        document.getElementById('progress-bar').style.width = `${((step)/curChar.story.length)*100}%`;
+        document.getElementById('game-emotion').innerText = sData.em;
+        document.getElementById('game-situation').innerText = sData.sit;
+        const btns = document.querySelectorAll('#choices button');
+        btns[0].innerText = sData.a; btns[1].innerText = sData.b;
+    }
+
+    function nextStep(idx) {
+        if(idx === 1) {
+            if(step < curChar.story.length - 1) { step++; renderStep(); } else { goWrite(); }
+        } else { alert("역사가 다른 방향으로 흘러갑니다. 다시 선택해주세요."); }
+    }
+
+    function goWrite() {
+        showScreen('screen-write'); setBG(BG_HOME);
+        document.getElementById('write-fallback').innerText = curChar.emo;
+        const img = document.getElementById('write-img');
+        img.style.display = 'block';
+        img.src = curChar.img;
+        ['inp-hl','inp-evt','inp-emo','inp-th'].forEach(id => document.getElementById(id).value = '');
+    }
+
+    function saveArticle() {
+        const hl = document.getElementById('inp-hl').value;
+        const evt = document.getElementById('inp-evt').value;
+        const emo = document.getElementById('inp-emo').value;
+        const th = document.getElementById('inp-th').value;
+        if(!hl) { alert("헤드라인은 꼭 적어주세요!"); return; }
+
+        const article = { id: Date.now(), name: curChar.name, img: curChar.img, emo: curChar.emo, hl: hl, evt: evt, emoTxt: emo, th: th, date: new Date().toLocaleDateString() };
+        let news = JSON.parse(localStorage.getItem('myHistoryNews')) || [];
+        news.push(article);
+        localStorage.setItem('myHistoryNews', JSON.stringify(news));
+
+        alert("📰 기사 발행 성공!");
+        const audio = document.getElementById('bgm-player');
+        if(curChar.audio) { audio.src = curChar.audio; audio.play(); }
+        showNewspaper();
+    }
+
+    function showNewspaper() {
+        showScreen('screen-news'); setBG(BG_HOME);
+        const area = document.getElementById('news-content'); area.innerHTML = "";
+        let news = JSON.parse(localStorage.getItem('myHistoryNews')) || [];
+        if(news.length === 0) { area.innerHTML = "<p style='text-align:center;'>발행된 기사가 없습니다.</p>"; return; }
+        news.slice().reverse().forEach(a => {
+            const div = document.createElement('div'); div.className = 'article-card';
+            // 기사에서도 이미지 깨지면 이모지 나오도록
+            div.innerHTML = `<div class="article-hl">${a.hl}</div><div style="display:flex; gap:15px; align-items:center;"><div style="width:80px; height:80px; border-radius:50%; overflow:hidden; flex-shrink:0; border:1px solid #ddd; position:relative; display:flex; justify-content:center; align-items:center; font-size:40px; background:#fff;"><div style="position:absolute;">${a.emo}</div><img src="${a.img}" style="width:100%; height:100%; object-fit:cover; position:relative;" onerror="this.style.display='none'"></div><div><b>[인물]</b> ${a.name} &nbsp; <b>[사건]</b> ${a.evt}<br><b>[심정]</b> ${a.emoTxt}<br><b>[생각]</b> ${a.th}</div></div>`;
+            area.appendChild(div);
+        });
+    }
+
+    function goHome() { showScreen('screen-select'); setBG(BG_HOME); }
+    function resetAll() { if(confirm("초기화 하시겠습니까?")) { localStorage.removeItem('myHistoryNews'); alert("초기화 완료"); goHome(); } }
+</script>
+</body>
+</html>
